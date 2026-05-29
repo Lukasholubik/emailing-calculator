@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! function_exists( 'grou_register_admin_menu_group' ) ) :
 /**
  * Zaregistruje skupinové separátory okolo zadané pozice v admin menu.
  * Bezpečné pro volání z více pluginů – separátory se vloží jen jednou.
@@ -50,6 +51,9 @@ function grou_register_admin_menu_group( int $plugin_position ): void {
 	}
 }
 
+endif;
+
+if ( ! function_exists( 'grou_output_admin_group_css' ) ) :
 /**
  * Výstup CSS pro skupinové separátory. Zavolat z admin_head.
  * Bezpečné pro volání z více pluginů – CSS se vypíše jen jednou.
@@ -106,3 +110,4 @@ function grou_output_admin_group_css(): void {
 }
 </style>';
 }
+endif;
