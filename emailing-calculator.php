@@ -29,12 +29,6 @@ if ( file_exists( $ecalc_updater_file ) ) {
 		'emailing-calculator'
 	);
 
-	// Token pro přístup k private repozitáři – přidat do wp-config.php:
-	// define( 'SMEC_GITHUB_TOKEN', 'ghp_xxx...' );
-	if ( defined( 'SMEC_GITHUB_TOKEN' ) && SMEC_GITHUB_TOKEN ) {
-		$ecalc_update_checker->setAuthentication( SMEC_GITHUB_TOKEN );
-	}
-
 	// Používat GitHub Releases – umožňuje rollback na starší verzi
 }
 
