@@ -229,9 +229,8 @@ class ECAlc_REST {
 			$lead_id = $this->leads->insert( $lead_data );
 		}
 
-		if ( ! empty( $se_result['response'] ) ) {
-			$this->leads->update_smartemailing_status( $lead_id, $se_result['status'], $se_result['response'] );
-		}
+		// Vždy uložit SE status – i bez response – aby bylo v adminu vidět důvod
+		$this->leads->update_smartemailing_status( $lead_id, $se_result['status'], $se_result['response'] ?? '' );
 
 		$email_data = array_merge( $lead_data, [
 			'final_potential'    => $calc['final_potential'],

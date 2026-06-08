@@ -26,13 +26,16 @@ class ECAlc_SmartEmailing {
 		$cfg = $this->settings->get_smartemailing();
 
 		if ( ! $cfg['enabled'] ) {
-			return [ 'status' => 'disabled', 'response' => '' ];
+			return [ 'status' => 'disabled', 'response' => 'Integrace není aktivní (vypnuto v nastavení).' ];
 		}
 		if ( $cfg['require_marketing_consent'] && ! $has_marketing_consent ) {
-			return [ 'status' => 'skipped_no_consent', 'response' => '' ];
+			return [ 'status' => 'skipped_no_consent', 'response' => 'Kontakt nemá marketingový souhlas.' ];
 		}
 		if ( empty( $cfg['username'] ) || empty( $cfg['api_key'] ) ) {
-			return [ 'status' => 'failed', 'response' => 'Chybí přihlašovací údaje.' ];
+			return [ 'status' => 'failed', 'response' => 'Chybí přihlašovací údaje (username nebo API klíč).' ];
+		}
+		if ( empty( $cfg['list_id'] ) ) {
+			return [ 'status' => 'failed', 'response' => 'Chybí ID seznamu kontaktů.' ];
 		}
 
 		return $this->import_contact( $lead_data, $cfg, ECAlc_Lead_Status::CEKANI );
