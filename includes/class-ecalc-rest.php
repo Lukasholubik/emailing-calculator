@@ -310,13 +310,11 @@ class ECAlc_REST {
 		$lead_status     = $lead['lead_status'] ?? ECAlc_Lead_Status::CEKANI;
 		$is_active       = in_array( $lead_status, $active_statuses, true );
 
-		// Záměrně nevracíme cta_clicked/cta_type – ty nejsou potřeba pro tuto kontrolu
-		// a zbytečně by odhalovaly interní tracking data komukoliv kdo zná email leadu.
+		// Vracíme jen minimum – žádný interní status ani label, aby nebylo možné
+		// enumerovat databázi leadů nebo zjišťovat jejich stav bez autentizace.
 		return new WP_REST_Response( [
-			'found'        => true,
-			'status'       => $lead_status,
-			'status_label' => ECAlc_Lead_Status::label( $lead_status ),
-			'is_active'    => $is_active,
+			'found'     => true,
+			'is_active' => $is_active,
 		], 200 );
 	}
 

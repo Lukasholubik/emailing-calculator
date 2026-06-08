@@ -1,4 +1,16 @@
 /* === Emailing Calculator – Frontend === */
+
+/* Honeypot anti-spam – pole musí být skryté, ale viditelně označené jako spam ochrana */
+.ecalc-honeypot {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	pointer-events: none;
+}
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 
 /* Výchozí hodnoty – přepíše je inline CSS generovaný z administrace */

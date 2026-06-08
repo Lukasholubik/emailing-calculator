@@ -21,8 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<p class="ecalc-form-subtitle">Orientační kalkulačka vám ukáže, jaký výkon může emailing pro váš e-shop dosahovat a jaký balíček dává podle zadaných údajů smysl.</p>
 
 				<form id="ecalc-form" novalidate>
-					<!-- Honeypot ochrana -->
-					<div style="position:absolute;left:-9999px;opacity:0;pointer-events:none;">
+					<!-- Honeypot ochrana proti spamu -->
+					<div class="ecalc-honeypot" aria-hidden="true">
+						<label for="_hp_field">Nevyplňujte toto pole</label>
 						<input type="text" name="_hp_field" id="_hp_field" tabindex="-1" autocomplete="off">
 					</div>
 
@@ -132,7 +133,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<div class="ecalc-field ecalc-field--checkbox">
 						<label class="ecalc-checkbox-label">
 							<input type="checkbox" id="ecalc-consent-data" name="consent_data" value="1" required>
-							<span>Souhlasím se zpracováním osobních údajů pro účely odpovědi na kalkulačku.</span>
+							<span>Souhlasím se <a href="<?php echo esc_url( get_privacy_policy_url() ?: home_url( '/ochrana-osobnich-udaju' ) ); ?>" target="_blank" rel="noopener noreferrer">zpracováním osobních údajů</a> pro účely vyhodnocení kalkulačky. <span class="ecalc-required">*</span></span>
 						</label>
 						<span class="ecalc-error-msg" id="ecalc-error-consent-data"></span>
 					</div>
