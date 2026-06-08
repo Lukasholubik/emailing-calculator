@@ -3,6 +3,13 @@
 VĹˇechny vĂ˝raznĂ© zmÄ›ny jsou dokumentovĂˇny v tomto souboru.
 FormĂˇt dle [Keep a Changelog](https://keepachangelog.com/cs/1.0.0/).
 
+## [1.5.3] – 2026-06-08
+
+### Opraveno
+- Honeypot anti-spam: nahrazen inline styl `left:-9999px` CSS třídou `.ecalc-honeypot` (clip-path pattern) – Google Safe Browsing neoznačuje jako podezřelé skryté pole
+- Souhlas GDPR: přidán klikatelný odkaz na stránku ochrany osobních údajů v souhlasovém checkboxu
+- REST `/check-email`: endpoint přestal vracet interní stav leadu (`status`, `status_label`) neautentizovaným požadavkům – zamezení enumerace databáze
+
 ## [1.5.1] – 2026-06-08
 
 ### Opraveno
