@@ -37,11 +37,12 @@ class ECAlc_Admin {
 		add_action( 'admin_post_ecalc_delete_lead', [ $this, 'delete_lead' ] );
 		add_action( 'admin_post_ecalc_export_csv', [ $this, 'export_csv' ] );
 		add_action( 'admin_post_ecalc_bulk_action', [ $this, 'bulk_action' ] );
-		add_action( 'wp_ajax_ecalc_resend_smartemailing',   [ $this, 'ajax_resend_smartemailing' ] );
-		add_action( 'wp_ajax_ecalc_change_lead_status',    [ $this, 'ajax_change_lead_status' ] );
-		add_action( 'wp_ajax_ecalc_test_smartemailing',    [ $this, 'ajax_test_smartemailing' ] );
-		add_action( 'wp_ajax_ecalc_test_turnstile',        [ $this, 'ajax_test_turnstile' ] );
-		add_action( 'wp_ajax_ecalc_get_analytics',         [ $this, 'ajax_get_analytics' ] );
+		add_action( 'wp_ajax_ecalc_resend_smartemailing',      [ $this, 'ajax_resend_smartemailing' ] );
+		add_action( 'wp_ajax_ecalc_change_lead_status',       [ $this, 'ajax_change_lead_status' ] );
+		add_action( 'wp_ajax_ecalc_test_smartemailing',       [ $this, 'ajax_test_smartemailing' ] );
+		add_action( 'wp_ajax_ecalc_test_turnstile',           [ $this, 'ajax_test_turnstile' ] );
+		add_action( 'wp_ajax_ecalc_get_analytics',            [ $this, 'ajax_get_analytics' ] );
+		add_action( 'wp_ajax_ecalc_bulk_export_smartemailing',[ $this, 'ajax_bulk_export_smartemailing' ] );
 	}
 
 	public function add_menu(): void {
@@ -429,6 +430,30 @@ class ECAlc_Admin {
 		}
 	}
 
+	public function ajax_bulk_export_smartemailing(): void {
+		$this->capability_check();
+		check_ajax_referer( 'ecalc_bulk_export', 'nonce' );
+
+		$date_from = sanitize_text_field( $_POST['date_from'] ?? '' );
+		$date_to   = sanitize_text_field( $_POST['date_to']   ?? '' );
+
+		// Validace formátu data
+		if ( $date_from && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) ) {
+			wp_send_json_error( [ 'message' => 'Neplatný formát data od.' ] );
+		}
+		if ( $date_to && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
+			wp_send_json_error( [ 'message' => 'Neplatný formát data do.' ] );
+		}
+
+		$result = $this->smartemailing->bulk_export( $date_from, $date_to );
+
+		if ( $result['success'] ) {
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( $result );
+		}
+	}
+
 	public function ajax_test_turnstile(): void {
 		$this->capability_check();
 		check_ajax_referer( 'ecalc_test_ts', 'nonce' );
@@ -678,7 +703,8 @@ class ECAlc_Admin {
 		$this->capability_check();
 		$packages = $this->settings->get_packages();
 		$notice   = $this->get_notice();
-		$this->render_template( 'admin/page-packages.php', compact( 'packages', 'notice' ) );
+		$se       = $this->settings->get_smartemailing();
+		$this->render_template( 'admin/page-packages.php', compact( 'packages', 'notice', 'se' ) );
 	}
 
 	public function save_packages(): void {
@@ -708,6 +734,7 @@ class ECAlc_Admin {
 				'result_text' => sanitize_textarea_field( $item['result_text'] ?? '' ),
 				'active'      => isset( $item['active'] ) ? 1 : 0,
 				'order'       => (int) ( $item['order'] ?? $i ),
+				'se_value'    => sanitize_text_field( $item['se_value'] ?? '' ),
 			];
 			$i++;
 		}

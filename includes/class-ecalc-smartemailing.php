@@ -55,7 +55,20 @@ class ECAlc_SmartEmailing {
 			return;
 		}
 
-		$this->import_contact( $lead, $cfg, $status );
+		$result = $this->import_contact( $lead, $cfg, $status );
+
+		// Aktualizovat SE status v DB, aby byl viditelný v adminu
+		$wpdb->update(
+			$table,
+			[
+				'smartemailing_status'          => $result['status'],
+				'smartemailing_last_response'   => mb_substr( $result['response'] ?? '', 0, 1000 ),
+				'smartemailing_last_attempt_at' => current_time( 'mysql', true ),
+			],
+			[ 'id' => $lead_id ],
+			[ '%s', '%s', '%s' ],
+			[ '%d' ]
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -155,12 +168,17 @@ class ECAlc_SmartEmailing {
 	private function map_custom_fields( array $lead, array $cfg ): array {
 		$fields  = [];
 		$mapping = [
-			'cf_segment'         => $lead['segment']                ?? '',
-			'cf_monthly_revenue' => $lead['monthly_revenue']        ?? '',
-			'cf_final_potential' => $lead['final_potential']        ?? '',
-			'cf_emailing_mid'    => $lead['emailing_revenue_mid']   ?? '',
-			'cf_available_budget'=> $lead['available_budget']       ?? '',
-			'cf_package'         => $lead['recommended_package']    ?? '',
+			'cf_segment'         => $lead['segment']              ?? '',
+			'cf_monthly_revenue' => $lead['monthly_revenue']      ?? '',
+			'cf_final_potential' => $lead['final_potential']      ?? '',
+			'cf_emailing_mid'    => $lead['emailing_revenue_mid'] ?? '',
+			'cf_available_budget'=> $lead['available_budget']     ?? '',
+			// Hodnota balíčku pro SE: preferuje se_value z nastavení balíčku, fallback na název balíčku
+			// recommended_package může být string (z DB) nebo array (z kalkulátoru) – normalizujeme na string
+			'cf_package'         => $this->get_package_se_value(
+				$this->extract_package_id( $lead['recommended_package'] ?? '' ),
+				$lead['recommended_package_name'] ?? ''
+			),
 		];
 
 		foreach ( $mapping as $setting_key => $value ) {
@@ -249,6 +267,90 @@ class ECAlc_SmartEmailing {
 		}
 
 		return [ 'status' => 'failed', 'response' => "HTTP {$code}: {$body_string}" ];
+	}
+
+	// -------------------------------------------------------------------------
+	// Hromadný export historických leadů
+	// -------------------------------------------------------------------------
+	public function bulk_export( string $date_from = '', string $date_to = '' ): array {
+		$cfg = $this->get_validated_cfg();
+		if ( ! $cfg ) {
+			return [ 'success' => false, 'message' => 'Integrace není nakonfigurována nebo aktivní.' ];
+		}
+
+		global $wpdb;
+		$table  = $wpdb->prefix . 'emailing_calculator_leads';
+		$where  = '1=1';
+		$values = [];
+
+		if ( $date_from ) {
+			$where   .= ' AND DATE(created_at) >= %s';
+			$values[] = sanitize_text_field( $date_from );
+		}
+		if ( $date_to ) {
+			$where   .= ' AND DATE(created_at) <= %s';
+			$values[] = sanitize_text_field( $date_to );
+		}
+		if ( $cfg['require_marketing_consent'] ) {
+			$where .= ' AND consent_marketing = 1';
+		}
+
+		$sql   = "SELECT * FROM {$table} WHERE {$where} ORDER BY id ASC";
+		$leads = $values
+			? $wpdb->get_results( $wpdb->prepare( $sql, ...$values ), ARRAY_A )
+			: $wpdb->get_results( $sql, ARRAY_A );
+
+		if ( empty( $leads ) ) {
+			return [ 'success' => true, 'message' => 'Žádné leady ke exportu (nebo žádné s marketingovým souhlasem).', 'count' => 0 ];
+		}
+
+		$sent  = 0;
+		$errors = 0;
+		foreach ( $leads as $lead ) {
+			$result = $this->import_contact( $lead, $cfg, $lead['lead_status'] ?? 'cekani' );
+			if ( $result['status'] === 'sent' ) {
+				$sent++;
+				$wpdb->update( $table, [
+					'smartemailing_status'       => 'synced',
+					'smartemailing_last_attempt_at' => current_time( 'mysql', true ),
+				], [ 'id' => $lead['id'] ], [ '%s', '%s' ], [ '%d' ] );
+			} else {
+				$errors++;
+			}
+		}
+
+		$msg = "Export dokončen: {$sent} odesláno";
+		if ( $errors ) $msg .= ", {$errors} chyb";
+		$msg .= " (celkem " . count( $leads ) . " leadů).";
+
+		return [ 'success' => true, 'message' => $msg, 'count' => $sent, 'errors' => $errors ];
+	}
+
+	private function extract_package_id( mixed $package ): string {
+		if ( is_array( $package ) ) {
+			return (string) ( $package['id'] ?? $package['name'] ?? '' );
+		}
+		return (string) $package;
+	}
+
+	private function get_package_se_value( string $package_id, string $package_name ): string {
+		$packages = $this->settings->get_packages();
+		foreach ( $packages as $pkg ) {
+			if ( (string) ( $pkg['id'] ?? '' ) === $package_id || ( $pkg['name'] ?? '' ) === $package_name ) {
+				$se_value = trim( $pkg['se_value'] ?? '' );
+				// Pokud je se_value vyplněno, použij ho; jinak název balíčku
+				return $se_value !== '' ? $se_value : ( $pkg['name'] ?? $package_name );
+			}
+		}
+		// Fallback – název balíčku z leadu
+		return $package_name;
+	}
+
+	private function get_validated_cfg(): ?array {
+		$cfg = $this->settings->get_smartemailing();
+		if ( ! $cfg['enabled'] ) return null;
+		if ( empty( $cfg['username'] ) || empty( $cfg['api_key'] ) ) return null;
+		return $cfg;
 	}
 
 	// Zpětná kompatibilita

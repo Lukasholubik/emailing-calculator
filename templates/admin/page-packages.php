@@ -69,6 +69,20 @@
 								<button type="button" class="button ecalc-add-item" data-pkg="<?php echo (int) $i; ?>">+ Přidat položku</button>
 							</td>
 						</tr>
+						<tr>
+							<th><label for="pkg-se-value-<?php echo (int) $i; ?>">Název v SmartEmailingu</label></th>
+							<td>
+								<input type="text" id="pkg-se-value-<?php echo (int) $i; ?>"
+									name="packages[<?php echo (int) $i; ?>][se_value]"
+									value="<?php echo esc_attr( $pkg['se_value'] ?? '' ); ?>"
+									class="regular-text"
+									placeholder="<?php echo esc_attr( $pkg['name'] ); ?>">
+								<p class="description">
+									Hodnota odeslaná do SmartEmailingu (pole „Doporučený balíček").<br>
+									Nechte prázdné = použije se název balíčku (<strong><?php echo esc_html( $pkg['name'] ); ?></strong>).
+								</p>
+							</td>
+						</tr>
 					</table>
 				</div>
 			<?php endforeach; ?>
@@ -124,6 +138,13 @@
 					<td>
 						<div class="ecalc-items-list" data-index="__IDX__"></div>
 						<button type="button" class="button ecalc-add-item" data-pkg="__IDX__">+ Přidat položku</button>
+					</td>
+				</tr>
+				<tr>
+					<th><label>Název v SmartEmailingu</label></th>
+					<td>
+						<input type="text" name="packages[__IDX__][se_value]" value="" class="regular-text" placeholder="Název balíčku">
+						<p class="description">Hodnota odeslaná do SmartEmailingu (pole „Doporučený balíček"). Prázdné = název balíčku.</p>
 					</td>
 				</tr>
 			</table>

@@ -195,7 +195,9 @@ class ECAlc_REST {
 			'time_to_submit'    => isset( $params['time_to_submit'] ) ? max( 0, min( 7200, (int) $params['time_to_submit'] ) ) : null,
 		], $calc );
 
-		$se_result = $this->smartemailing->send_lead( $lead_data, (bool) $lead_data['consent_marketing'] );
+		// Ochrana před spamem – sledovat počet různých e-mailů z jedné IP za hodinu.
+		// Pokud stejná IP použila 4 a více různých e-mailů, SE import přeskočíme.
+		$se_result = $this->send_to_se_with_spam_check( $lead_data );
 		$lead_data['smartemailing_status'] = $se_result['status'];
 
 		if ( $existing_lead ) {
@@ -659,5 +661,38 @@ class ECAlc_REST {
 
 	private function error( string $code, string $message, int $status ): WP_REST_Response {
 		return new WP_REST_Response( [ 'success' => false, 'code' => $code, 'message' => $message ], $status );
+	}
+
+	/**
+	 * Odeslat lead do SmartEmailingu s ochranou proti spamu.
+	 *
+	 * Sledujeme počet různých e-mailů odeslaných z jedné IP za hodinu.
+	 * Pokud stejná IP použila 4 a více různých adres, import přeskočíme –
+	 * jde pravděpodobně o testování nebo spam, ne o reálného klienta.
+	 * Normální přepočet (klient se uklikl v e-mailu) projde vždy.
+	 */
+	private function send_to_se_with_spam_check( array $lead_data ): array {
+		$email      = sanitize_email( $lead_data['email'] ?? '' );
+		$ip         = ecalc_get_client_ip();
+		$ip_key     = 'ecalc_ip_emails_' . md5( $ip );
+		$ip_data    = get_transient( $ip_key );
+
+		if ( ! is_array( $ip_data ) ) {
+			$ip_data = [ 'emails' => [], 'count' => 0 ];
+		}
+
+		// Zaregistrovat nový e-mail pro tuto IP (pokud ještě není evidován)
+		if ( $email && ! in_array( $email, $ip_data['emails'], true ) ) {
+			$ip_data['emails'][] = $email;
+			$ip_data['count']    = count( $ip_data['emails'] );
+			set_transient( $ip_key, $ip_data, HOUR_IN_SECONDS );
+		}
+
+		// 4 a více různých e-mailů z jedné IP → přeskočit SE (spam ochrana)
+		if ( $ip_data['count'] >= 4 ) {
+			return [ 'status' => 'skipped_spam_protection', 'response' => '' ];
+		}
+
+		return $this->smartemailing->send_lead( $lead_data, (bool) ( $lead_data['consent_marketing'] ?? false ) );
 	}
 }

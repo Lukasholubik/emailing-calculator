@@ -76,6 +76,49 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-06-08 – SmartEmailing: sync stavu při manuální změně + DB tracking
+
+**Soubory:** `includes/class-ecalc-smartemailing.php`  
+**Co bylo uděláno:** Mechanismus `on_status_changed` existoval, ale neaktualizoval `smartemailing_status` v DB po provedené synchronizaci. Opraveno – po úspěšném (i neúspěšném) volání SE API se aktualizují sloupce `smartemailing_status`, `smartemailing_last_response`, `smartemailing_last_attempt_at`.  
+**Jak to funguje:** Admin změní stav leadu → `update_lead_status()` → `do_action('ecalc_lead_status_changed')` → `on_status_changed()` → SE import s novým statusem tagem + custom field stavu.  
+**Poznámka k tagům:** Staré status tagy se v SE nesmažou (SE API to neumožňuje v rámci importu). Pro čisté sledování stavu doporučit použití `status_customfield_id` – ten se vždy přepíše.
+
+---
+
+### 2026-06-08 – SmartEmailing: ochrana proti spamu při přepočtu s jiným e-mailem
+
+**Soubory:** `includes/class-ecalc-rest.php`  
+**Co bylo uděláno:** Přidána metoda `send_to_se_with_spam_check()`. Sleduje počet různých e-mailových adres odeslaných z jedné IP za hodinu (transient `ecalc_ip_emails_{hash}`). Pokud stejná IP pošle 4 a více různých e-mailů, SE import se přeskočí (status `skipped_spam_protection`). 1–3 různé e-maily = normální chování, import proběhne.  
+**Proč:** Klient mohl kliknout na špatný e-mail a přepočítat → to je OK a má se propisovat. Ale 4+ různých e-mailů = pravděpodobný spam nebo abuse.  
+**Pozor na:** Transient se resetuje po hodině. Pokud reálný klient legitimně testuje více adres, může se mu zastavit sync po 4. adrese – to je akceptovatelné.
+
+---
+
+### 2026-06-08 – Balíčky: vlastní název pro SmartEmailing (se_value)
+
+**Soubory:** `templates/admin/page-packages.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-smartemailing.php`  
+**Co bylo uděláno:** Každý balíček má nové pole „Název v SmartEmailingu" (`se_value`). Tato hodnota se pošle do SE custom pole `cf_package` místo automatického názvu balíčku. Pokud je prázdné, použije se název balíčku jako fallback. Funguje i pro nově přidané balíčky.  
+**Datová struktura:** `$pkg['se_value'] = 'VIP'` → do SE jde `VIP` místo `Premium`.
+
+---
+
+**Soubory:** `templates/admin/page-packages.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-smartemailing.php`  
+**Co bylo uděláno:** Každý balíček má novou sekci „SmartEmailing – custom pole" kde lze přidat libovolný počet párů (ID pole → Hodnota). Stránka zobrazuje která SE custom pole jsou nakonfigurována globálně (pro orientaci). Data se ukládají do `custom_fields` klíče každého balíčku v `ecalc_packages`. Při importu leadu se per-balíčková custom pole automaticky přidají k ostatním mapovaným polím.  
+**Datová struktura:** `$pkg['custom_fields'] = [['field_id' => 15, 'value' => 'Business'], ...]`
+
+---
+
+### 2026-06-08 – SmartEmailing: průvodce, oprava balíčku, bulk export
+
+**Soubory:** `templates/admin/page-smartemailing.php`, `includes/class-ecalc-smartemailing.php`, `includes/class-ecalc-admin.php`  
+**Co bylo uděláno:**
+1. **Průvodce nastavením** – rozbalovací sekce na stránce SmartEmailing vysvětluje: jak napojit SE, jaká custom pole vytvořit v SE (typ, co se ukládá, příklady hodnot), jak fungují tagy, kde najít ID custom pole.
+2. **Oprava `cf_package`** – místo ID balíčku (`package_1`) se nyní odesílá **název balíčku** (`recommended_package_name`) přesně jak je zadán v sekci Balíčky.
+3. **Bulk export** – nová sekce na stránce SE umožňuje exportovat historické leady do SmartEmailingu. Výběr: všechny leady nebo vlastní rozsah dat (od–do). AJAX handler `ecalc_bulk_export_smartemailing` + metoda `bulk_export()` v SE třídě. Nonce: `ecalc_bulk_export`.  
+**Pozor na:** Bulk export může trvat déle u velkých databází – PHP timeout. Pro tisíce leadů zvážit batch processing.
+
+---
+
 ### 2026-06-08 – Vytvoření dokumentační složky
 
 **Soubory:** `docs/overview.md`, `docs/settings-reference.md`, `docs/dev-log.md`  
