@@ -85,6 +85,15 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ---
 
+### 2026-06-08 – Odstraněna IP-based spam ochrana (nefunkční za proxy/Cloudflare)
+
+**Soubory:** `includes/class-ecalc-rest.php`  
+**Co bylo uděláno:** Odstraněna metoda `send_to_se_with_spam_check` a IP-based spam ochrana. Na live webu za Cloudflare/reverse proxy vrací `REMOTE_ADDR` IP proxy serveru → všichni návštěvníci sdíleli stejný čítač → po 4 různých e-mailech se blokoval SE import pro všechny. Kontakty se neodesílaly nebo se chybně přeskakoval. Vráceno přímé volání `$this->smartemailing->send_lead()`.  
+**Dostatečná ochrana:** existující per-email rate limit (max 10 přepočtů/hodinu) v `handle_calculate()`.  
+**Poznámka k blacklistu:** SE samo označuje kontakty jako blacklisted pokud byli dříve odhlášeni – to je SE chování, ne chyba pluginu.
+
+---
+
 ### 2026-06-08 – SmartEmailing: ochrana proti spamu při přepočtu s jiným e-mailem
 
 **Soubory:** `includes/class-ecalc-rest.php`  
