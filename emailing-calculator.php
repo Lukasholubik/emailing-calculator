@@ -1,9 +1,9 @@
-﻿<?php
+<?php
 /**
  * Plugin Name: Emailing Calculator
- * Description: AkviziÄŤnĂ­ kalkulaÄŤka potenciĂˇlu emailingu pro e-shopy. Shortcode: [emailing_calculator]
+ * Description: Akviziční kalkulačka potenciálu emailingu pro e-shopy. Shortcode: [emailing_calculator]
  * Version: 1.5.3
- * Author: LukĂˇĹˇ HolubĂ­k
+ * Author: Lukáš Holubík
  * Text Domain: emailing-calculator
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -62,7 +62,3 @@ add_action( 'plugins_loaded', function () {
 	}
 	( new ECAlc_Plugin() )->run();
 } );
-
-
-
-
