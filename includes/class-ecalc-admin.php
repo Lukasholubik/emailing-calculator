@@ -43,6 +43,7 @@ class ECAlc_Admin {
 		add_action( 'wp_ajax_ecalc_test_turnstile',           [ $this, 'ajax_test_turnstile' ] );
 		add_action( 'wp_ajax_ecalc_get_analytics',            [ $this, 'ajax_get_analytics' ] );
 		add_action( 'wp_ajax_ecalc_bulk_export_smartemailing',[ $this, 'ajax_bulk_export_smartemailing' ] );
+		add_action( 'wp_ajax_ecalc_add_manual_lead',          [ $this, 'ajax_add_manual_lead' ] );
 	}
 
 	public function add_menu(): void {
@@ -59,6 +60,7 @@ class ECAlc_Admin {
 		$pages = [
 			[ 'ecalc_overview',        'Přehledy',          [ $this, 'page_overview' ] ],
 			[ 'ecalc_leads',           'Leady',             [ $this, 'page_leads' ] ],
+			[ 'ecalc_add_lead',        '+ Přidat lead',     [ $this, 'page_add_lead' ] ],
 			// Skupina: Nastavení výpočtů
 			[ 'ecalc_group_calc',      'Nastavení výpočtů', [ $this, 'page_group_calc' ] ],
 			[ 'ecalc_settings',        'Výpočet',           [ $this, 'page_settings' ] ],
@@ -176,6 +178,120 @@ class ECAlc_Admin {
 	// -------------------------------------------------------------------------
 	// LEADY
 	// -------------------------------------------------------------------------
+
+	public function page_add_lead(): void {
+		$this->capability_check();
+		$packages  = $this->settings->get_packages();
+		$segments  = $this->settings->get_segments();
+		$statuses  = ECAlc_Lead_Status::all();
+		$nonce     = wp_create_nonce( 'ecalc_add_manual_lead' );
+		$ajax_url  = admin_url( 'admin-ajax.php' );
+		require ECALC_PLUGIN_DIR . 'templates/admin/page-add-lead.php';
+	}
+
+	public function ajax_add_manual_lead(): void {
+		check_ajax_referer( 'ecalc_add_manual_lead', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => 'Nedostatečná oprávnění.' ], 403 );
+		}
+
+		$name    = sanitize_text_field( wp_unslash( $_POST['name']    ?? '' ) );
+		$email   = sanitize_email( wp_unslash( $_POST['email']  ?? '' ) );
+		$phone   = sanitize_text_field( wp_unslash( $_POST['phone']   ?? '' ) );
+		$status  = sanitize_key( $_POST['lead_status'] ?? ECAlc_Lead_Status::CEKANI );
+		$package = sanitize_text_field( wp_unslash( $_POST['package']  ?? '' ) );
+		$segment = sanitize_text_field( wp_unslash( $_POST['segment']  ?? '' ) );
+		$revenue = (float) ( $_POST['monthly_revenue'] ?? 0 );
+		$url     = esc_url_raw( wp_unslash( $_POST['shop_url'] ?? '' ) );
+		$note    = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
+
+		if ( ! $name || ! is_email( $email ) ) {
+			wp_send_json_error( [ 'message' => 'Jméno a platný e-mail jsou povinné.' ] );
+		}
+		if ( ! ECAlc_Lead_Status::is_valid( $status ) ) {
+			$status = ECAlc_Lead_Status::CEKANI;
+		}
+
+		// Najdi existující balíček pro cenu
+		$packages_cfg    = $this->settings->get_packages();
+		$package_price   = 0.0;
+		foreach ( $packages_cfg as $pkg ) {
+			if ( ( $pkg['name'] ?? '' ) === $package ) {
+				$package_price = (float) ( $pkg['price'] ?? 0 );
+				break;
+			}
+		}
+
+		$data = [
+			'name'                         => $name,
+			'email'                        => $email,
+			'shop_url'                     => $url,
+			'segment'                      => $segment,
+			'consumable_percentage'        => 0,
+			'database_range'               => '',
+			'monthly_revenue'              => $revenue,
+			'expected_pno'                 => 0,
+			'consumable_score'             => 0,
+			'database_score'               => 0,
+			'segment_score'                => 0,
+			'total_score'                  => 0,
+			'final_potential'              => 0,
+			'emailing_revenue_low'         => 0,
+			'emailing_revenue_mid'         => 0,
+			'emailing_revenue_high'        => 0,
+			'available_budget'             => 0,
+			'recommended_package'          => $package,
+			'recommended_package_price'    => $package_price,
+			'recommended_package_real_pno' => 0,
+			'result_type'                  => 'manual',
+			'consent_data'                 => 1,
+			'consent_marketing'            => 1,
+			'ip_address'                   => '',
+			'user_agent'                   => '',
+			'smartemailing_status'         => 'pending',
+			'utm_source'                   => 'manual',
+			'utm_medium'                   => 'admin',
+			'utm_campaign'                 => '',
+			'referrer'                     => '',
+			'time_to_submit'               => null,
+		];
+
+		$lead_id = $this->leads->insert( $data );
+
+		if ( ! $lead_id ) {
+			wp_send_json_error( [ 'message' => 'Chyba při ukládání leadu do databáze.' ] );
+		}
+
+		// Uložit telefon pokud byl zadán
+		if ( $phone ) {
+			$this->leads->save_phone( $lead_id, $phone );
+		}
+
+		// Log manuálního přidání
+		$log_note = 'Manuálně přidáno adminem.';
+		if ( $note ) {
+			$log_note .= ' Poznámka: ' . $note;
+		}
+		$this->leads->log_change( $lead_id, 'manual_add', $log_note );
+
+		// Nastavit stav (spustí hook ecalc_lead_status_changed → SmartEmailing sync)
+		// Jen pokud je stav jiný než výchozí CEKANI (insert ho nastavil na CEKANI)
+		if ( $status !== ECAlc_Lead_Status::CEKANI ) {
+			$this->leads->update_lead_status( $lead_id, $status );
+		} else {
+			// Pro CEKANI spustíme sync ručně
+			do_action( 'ecalc_lead_status_changed', $lead_id, ECAlc_Lead_Status::CEKANI );
+		}
+
+		$se_result = $this->smartemailing->send_lead_by_id( $lead_id );
+
+		wp_send_json_success( [
+			'lead_id'     => $lead_id,
+			'detail_url'  => admin_url( 'admin.php?page=ecalc_leads&action=view&id=' . $lead_id ),
+			'se_status'   => $se_result['status'] ?? '',
+			'message'     => 'Lead úspěšně přidán (ID ' . $lead_id . ').',
+		] );
+	}
 
 	public function page_leads(): void {
 		$this->capability_check();
