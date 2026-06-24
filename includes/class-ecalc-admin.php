@@ -207,6 +207,7 @@ class ECAlc_Admin {
 
 		if ( ! $name || ! is_email( $email ) ) {
 			wp_send_json_error( [ 'message' => 'Jméno a platný e-mail jsou povinné.' ] );
+			return;
 		}
 		if ( ! ECAlc_Lead_Status::is_valid( $status ) ) {
 			$status = ECAlc_Lead_Status::CEKANI;
@@ -260,6 +261,7 @@ class ECAlc_Admin {
 
 		if ( ! $lead_id ) {
 			wp_send_json_error( [ 'message' => 'Chyba při ukládání leadu do databáze.' ] );
+			return;
 		}
 
 		// Uložit telefon pokud byl zadán
