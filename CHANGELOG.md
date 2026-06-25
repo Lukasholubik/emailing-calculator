@@ -3,6 +3,12 @@
 VĹˇechny vĂ˝raznĂ© zmÄ›ny jsou dokumentovĂˇny v tomto souboru.
 FormĂˇt dle [Keep a Changelog](https://keepachangelog.com/cs/1.0.0/).
 
+## [1.5.6] – 2026-06-25
+
+### Přidáno
+- SmartEmailing: pole „Doporučený balíček" nyní dostává hodnotu i pro výsledek **Nízký potenciál** (výchozí `Nízký potenciál`, konfigurovatelné v admin → SmartEmailing → Mapování custom polí)
+- Nové nastavení „Nízký potenciál bez souhlasu" – umožňuje odesílat leady s nízkým potenciálem do SE i bez marketingového souhlasu
+
 ## [1.5.3] – 2026-06-08
 
 ### Opraveno
