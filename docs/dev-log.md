@@ -76,6 +76,18 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-06-25 – SmartEmailing: Nízký potenciál – hodnota balíčku + odeslání bez souhlasu
+
+**Soubory:** `includes/class-ecalc-settings.php`, `includes/class-ecalc-smartemailing.php`, `includes/class-ecalc-admin.php`, `templates/admin/page-smartemailing.php`
+
+**Co bylo uděláno:**
+1. Přidána konfigurovatelná hodnota `low_potential_se_value` (výchozí `Nízký potenciál`) – odesílá se do SE custom pole „Doporučený balíček" pro leady s výsledkem Nízký potenciál. Dříve bylo pole prázdné (recommended_package_name = '').
+2. Přidána nová metoda `get_cf_package_value()` v `ECAlc_SmartEmailing` – centralizuje logiku hodnoty balíčku pro SE (low_potential → konfigurovaný text, ostatní → původní logika přes `get_package_se_value()`).
+3. Přidáno nastavení `send_low_potential_without_consent` (výchozí vypnuto) – umožňuje odeslat Nízký potenciál do SE i bez marketingového souhlasu (přepíše podmínku `require_marketing_consent` jen pro tento výsledkový typ).
+4. Admin šablona: nová pole v sekci Připojení a Mapování custom polí.
+
+**Proč:** Leady s nízkým potenciálem nedostávali žádnou hodnotu v SE poli „Doporučený balíček" – pole bylo prázdné, což znemožňovalo filtrování/segmentaci v SE automacích.
+
 ### 2026-06-08 – SmartEmailing: sync stavu při manuální změně + DB tracking
 
 **Soubory:** `includes/class-ecalc-smartemailing.php`  

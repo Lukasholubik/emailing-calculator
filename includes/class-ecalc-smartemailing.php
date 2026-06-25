@@ -28,8 +28,11 @@ class ECAlc_SmartEmailing {
 		if ( ! $cfg['enabled'] ) {
 			return [ 'status' => 'disabled', 'response' => 'Integrace není aktivní (vypnuto v nastavení).' ];
 		}
+		$is_low_potential = ( $lead_data['result_type'] ?? '' ) === 'low_potential';
 		if ( $cfg['require_marketing_consent'] && ! $has_marketing_consent ) {
-			return [ 'status' => 'skipped_no_consent', 'response' => 'Kontakt nemá marketingový souhlas.' ];
+			if ( ! ( $is_low_potential && ! empty( $cfg['send_low_potential_without_consent'] ) ) ) {
+				return [ 'status' => 'skipped_no_consent', 'response' => 'Kontakt nemá marketingový souhlas.' ];
+			}
 		}
 		if ( empty( $cfg['username'] ) || empty( $cfg['api_key'] ) ) {
 			return [ 'status' => 'failed', 'response' => 'Chybí přihlašovací údaje (username nebo API klíč).' ];
@@ -127,6 +130,7 @@ class ECAlc_SmartEmailing {
 		$extra_fields = $this->map_custom_fields( $lead, $cfg );
 		$customfields = array_merge( $customfields, $extra_fields );
 
+
 		if ( $customfields ) {
 			$contact['customfields'] = $customfields;
 		}
@@ -176,12 +180,7 @@ class ECAlc_SmartEmailing {
 			'cf_final_potential' => $lead['final_potential']      ?? '',
 			'cf_emailing_mid'    => $lead['emailing_revenue_mid'] ?? '',
 			'cf_available_budget'=> $lead['available_budget']     ?? '',
-			// Hodnota balíčku pro SE: preferuje se_value z nastavení balíčku, fallback na název balíčku
-			// recommended_package může být string (z DB) nebo array (z kalkulátoru) – normalizujeme na string
-			'cf_package'         => $this->get_package_se_value(
-				$this->extract_package_id( $lead['recommended_package'] ?? '' ),
-				$lead['recommended_package_name'] ?? ''
-			),
+			'cf_package'         => $this->get_cf_package_value( $lead, $cfg ),
 		];
 
 		foreach ( $mapping as $setting_key => $value ) {
@@ -327,6 +326,18 @@ class ECAlc_SmartEmailing {
 		$msg .= " (celkem " . count( $leads ) . " leadů).";
 
 		return [ 'success' => true, 'message' => $msg, 'count' => $sent, 'errors' => $errors ];
+	}
+
+	private function get_cf_package_value( array $lead, array $cfg ): string {
+		$rt = $lead['result_type'] ?? '';
+		if ( $rt === 'low_potential' ) {
+			$val = trim( $cfg['low_potential_se_value'] ?? '' );
+			return $val !== '' ? $val : 'Nízký potenciál';
+		}
+		return $this->get_package_se_value(
+			$this->extract_package_id( $lead['recommended_package'] ?? '' ),
+			$lead['recommended_package_name'] ?? ''
+		);
 	}
 
 	private function extract_package_id( mixed $package ): string {

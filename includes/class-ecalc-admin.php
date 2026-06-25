@@ -951,20 +951,22 @@ class ECAlc_Admin {
 		check_admin_referer( 'ecalc_save_smartemailing' );
 
 		$data = [
-			'enabled'                   => isset( $_POST['enabled'] ) ? 1 : 0,
-			'username'                  => sanitize_text_field( $_POST['username'] ?? '' ),
-			'api_key'                   => sanitize_text_field( $_POST['api_key'] ?? '' ),
-			'list_id'                   => sanitize_text_field( $_POST['list_id'] ?? '' ),
-			'default_tag'               => sanitize_text_field( $_POST['default_tag'] ?? '' ),
-			'status_tag_prefix'         => sanitize_text_field( $_POST['status_tag_prefix'] ?? 'lead-' ),
-			'status_customfield_id'     => (int) ( $_POST['status_customfield_id'] ?? 0 ),
-			'require_marketing_consent' => isset( $_POST['require_marketing_consent'] ) ? 1 : 0,
-			'cf_segment'                => (int) ( $_POST['cf_segment']          ?? 0 ),
-			'cf_monthly_revenue'        => (int) ( $_POST['cf_monthly_revenue']  ?? 0 ),
-			'cf_final_potential'        => (int) ( $_POST['cf_final_potential']  ?? 0 ),
-			'cf_emailing_mid'           => (int) ( $_POST['cf_emailing_mid']     ?? 0 ),
-			'cf_available_budget'       => (int) ( $_POST['cf_available_budget'] ?? 0 ),
-			'cf_package'                => (int) ( $_POST['cf_package']          ?? 0 ),
+			'enabled'                            => isset( $_POST['enabled'] ) ? 1 : 0,
+			'username'                           => sanitize_text_field( $_POST['username'] ?? '' ),
+			'api_key'                            => sanitize_text_field( $_POST['api_key'] ?? '' ),
+			'list_id'                            => sanitize_text_field( $_POST['list_id'] ?? '' ),
+			'default_tag'                        => sanitize_text_field( $_POST['default_tag'] ?? '' ),
+			'status_tag_prefix'                  => sanitize_text_field( $_POST['status_tag_prefix'] ?? 'lead-' ),
+			'status_customfield_id'              => (int) ( $_POST['status_customfield_id'] ?? 0 ),
+			'require_marketing_consent'          => isset( $_POST['require_marketing_consent'] ) ? 1 : 0,
+			'send_low_potential_without_consent' => isset( $_POST['send_low_potential_without_consent'] ) ? 1 : 0,
+			'cf_segment'                         => (int) ( $_POST['cf_segment']          ?? 0 ),
+			'cf_monthly_revenue'                 => (int) ( $_POST['cf_monthly_revenue']  ?? 0 ),
+			'cf_final_potential'                 => (int) ( $_POST['cf_final_potential']  ?? 0 ),
+			'cf_emailing_mid'                    => (int) ( $_POST['cf_emailing_mid']     ?? 0 ),
+			'cf_available_budget'                => (int) ( $_POST['cf_available_budget'] ?? 0 ),
+			'cf_package'                         => (int) ( $_POST['cf_package']          ?? 0 ),
+			'low_potential_se_value'             => sanitize_text_field( $_POST['low_potential_se_value'] ?? 'Nízký potenciál' ),
 		];
 
 		$this->settings->save_smartemailing( $data );

@@ -82,8 +82,8 @@
 						<td style="padding:8px 10px;border:1px solid #e0e0e0;font-weight:600;">Doporučený balíček</td>
 						<td style="padding:8px 10px;border:1px solid #e0e0e0;">Balíček kalkulačka</td>
 						<td style="padding:8px 10px;border:1px solid #e0e0e0;"><code>Text</code></td>
-						<td style="padding:8px 10px;border:1px solid #e0e0e0;">Název doporučeného balíčku (jak je zadaný v sekci Balíčky)</td>
-						<td style="padding:8px 10px;border:1px solid #e0e0e0;color:#2271b1;"><code>Start</code>, <code>Business</code>, <code>Premium</code></td>
+						<td style="padding:8px 10px;border:1px solid #e0e0e0;">Název doporučeného balíčku (jak je zadaný v sekci Balíčky). Pro Nízký potenciál se použije nastavitelná hodnota (výchozí: <code>Nízký potenciál</code>).</td>
+						<td style="padding:8px 10px;border:1px solid #e0e0e0;color:#2271b1;"><code>Start</code>, <code>Business</code>, <code>Nízký potenciál</code></td>
 					</tr>
 				</tbody>
 			</table>
@@ -162,6 +162,16 @@
 						<p class="description">Doporučeno. Pokud vypnete, budou se odesílat i kontakty bez marketingového souhlasu.</p>
 					</td>
 				</tr>
+				<tr>
+					<th>Nízký potenciál bez souhlasu</th>
+					<td>
+						<label>
+							<input type="checkbox" name="send_low_potential_without_consent" value="1" <?php checked( $se['send_low_potential_without_consent'] ?? 0 ); ?>>
+							Odesílat leady s nízkým potenciálem do SmartEmailingu i bez marketingového souhlasu
+						</label>
+						<p class="description">Pokud je aktivní výše uvedená podmínka souhlasu, tato volba ji přepíše jen pro výsledek <strong>Nízký potenciál</strong>.</p>
+					</td>
+				</tr>
 			</table>
 		</div>
 
@@ -233,7 +243,7 @@
 					],
 					'cf_package'          => [
 						'label' => 'Doporučený balíček',
-						'desc'  => 'Textové pole. Ukládá <strong>název balíčku</strong> přesně jak je zadán v sekci Balíčky. Příklad: <code>Start</code>, <code>Business</code>, <code>Premium</code>.',
+						'desc'  => 'Textové pole. Ukládá <strong>název balíčku</strong> přesně jak je zadán v sekci Balíčky. Příklad: <code>Start</code>, <code>Business</code>, <code>Premium</code>.<br>Pro <strong>Nízký potenciál</strong> se použije hodnota nastavená níže.',
 					],
 				];
 				foreach ( $cf_fields as $key => $info ) : ?>
@@ -245,6 +255,19 @@
 					</td>
 				</tr>
 				<?php endforeach; ?>
+				<tr>
+					<th><label for="low_potential_se_value">Hodnota pro Nízký potenciál</label></th>
+					<td>
+						<input type="text" id="low_potential_se_value" name="low_potential_se_value"
+							value="<?php echo esc_attr( $se['low_potential_se_value'] ?? 'Nízký potenciál' ); ?>"
+							class="regular-text"
+							placeholder="Nízký potenciál">
+						<p class="description">
+							Hodnota odeslaná do pole <strong>Doporučený balíček</strong> v SmartEmailingu, pokud lead dosáhl výsledku <strong>Nízký potenciál</strong>.<br>
+							Nechejte prázdné = použije se výchozí <code>Nízký potenciál</code>. Pole musí mít vyplněné ID výše (Doporučený balíček), aby se hodnota odeslala.
+						</p>
+					</td>
+				</tr>
 			</table>
 		</div>
 

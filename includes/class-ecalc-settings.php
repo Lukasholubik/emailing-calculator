@@ -126,21 +126,24 @@ class ECAlc_Settings {
 
 	public function get_smartemailing(): array {
 		$defaults = [
-			'enabled'                   => 0,
-			'username'                  => '',
-			'api_key'                   => '',
-			'list_id'                   => '',
-			'default_tag'               => 'emailing-kalkulacka',
-			'status_tag_prefix'         => 'lead-',
-			'status_customfield_id'     => 0,
-			'require_marketing_consent' => 1,
+			'enabled'                            => 0,
+			'username'                           => '',
+			'api_key'                            => '',
+			'list_id'                            => '',
+			'default_tag'                        => 'emailing-kalkulacka',
+			'status_tag_prefix'                  => 'lead-',
+			'status_customfield_id'              => 0,
+			'require_marketing_consent'          => 1,
+			'send_low_potential_without_consent' => 0,
 			// Mapování custom fields (ID v SmartEmailingu)
-			'cf_segment'                => 0,
-			'cf_monthly_revenue'        => 0,
-			'cf_final_potential'        => 0,
-			'cf_emailing_mid'           => 0,
-			'cf_available_budget'       => 0,
-			'cf_package'                => 0,
+			'cf_segment'                         => 0,
+			'cf_monthly_revenue'                 => 0,
+			'cf_final_potential'                 => 0,
+			'cf_emailing_mid'                    => 0,
+			'cf_available_budget'                => 0,
+			'cf_package'                         => 0,
+			// Hodnoty pro výsledkové typy bez doporučeného balíčku
+			'low_potential_se_value'             => 'Nízký potenciál',
 		];
 		$saved = get_option( 'ecalc_smartemailing', [] );
 		return wp_parse_args( $saved, $defaults );
