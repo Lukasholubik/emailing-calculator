@@ -148,6 +148,31 @@ Texty pro každý typ výsledku:
 
 ---
 
+## ecalc_arguments
+
+Texty argumentů „Proč máte tento potenciál" – zobrazují se u výsledku `package_1` / `package_n` / `borderline`, jeden text na faktor podle pásma jeho skóre (nízké/střední/vysoké):
+
+```php
+[
+    'enabled'          => 1,
+    'title'            => 'Proč máte tento potenciál',
+    'threshold_medium' => 0.34,   // skóre faktoru (0–1) od kterého se použije "medium" text
+    'threshold_high'   => 0.67,   // skóre faktoru od kterého se použije "high" text
+
+    'consumable_low'    => '...', 'consumable_medium' => '...', 'consumable_high' => '...',
+    'database_low'      => '...', 'database_medium'   => '...', 'database_high'   => '...',
+    'segment_low'       => '...', 'segment_medium'    => '...', 'segment_high'    => '...',
+
+    'summary' => 'Na základě těchto faktorů odhadujeme... {emailing_revenue_low} – {emailing_revenue_high}...',
+]
+```
+
+Texty prochází `ecalc_replace_variables()` (stejné placeholdery jako `ecalc_notifications`/`ecalc_result_texts`) – pozor, `{consumable_percentage}` a `{final_potential}` už samy obsahují „ %", nepsat je znovu.
+
+Výsledek se počítá v `ECAlc_Calculator::build_arguments()` a vrací se z REST `/calculate` jako `result.arguments` (`title`, `items[]`, `summary`).
+
+---
+
 ## ecalc_appearance
 
 CSS custom properties pro kompletní přebarvení:
@@ -347,6 +372,7 @@ Tyto options se automaticky aktualizují při každém zobrazení/odeslání:
 | Rozsahy obratu | `ecalc_revenue_ranges` | `admin_post_ecalc_revenue_ranges` |
 | Balíčky | `ecalc_packages` | `admin_post_ecalc_packages` |
 | Texty výsledků | `ecalc_result_texts` | `admin_post_ecalc_result_texts` |
+| Argumenty | `ecalc_arguments` | `admin_post_ecalc_save_arguments` |
 | Formulář & CTA | `ecalc_settings` | `admin_post_ecalc_form_cta` |
 | Info panel | `ecalc_info_panel` | `admin_post_ecalc_info_panel` |
 | Vzhled | `ecalc_appearance` | `admin_post_ecalc_appearance` |

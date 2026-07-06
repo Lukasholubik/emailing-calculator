@@ -68,6 +68,18 @@
 	function reachStep(step) {
 		var idx = ABANDON_STEPS.indexOf(step);
 		if (idx > furthestStep) furthestStep = idx;
+		updateProgressUI();
+	}
+
+	function updateProgressUI() {
+		var fillEl = document.getElementById('ecalc-progress-fill');
+		var textEl = document.getElementById('ecalc-progress-text');
+		if (!fillEl || !textEl) return;
+
+		var totalSteps = ABANDON_STEPS.length - 1; // 'initial' není krok navíc
+		var pct = Math.round((furthestStep / totalSteps) * 100);
+		fillEl.style.width = pct + '%';
+		textEl.textContent = pct >= 100 ? 'Formulář je kompletní' : 'Vyplněno ' + pct + ' %';
 	}
 
 	function initStepTracking() {
@@ -773,6 +785,31 @@
 			html += '<div class="ecalc-result-text' + textClass + '">' + res.text + '</div>';
 		}
 
+		// ---- ARGUMENTY ("proč máte tento potenciál") ----
+		if (res.arguments && res.arguments.items && res.arguments.items.length > 0) {
+			html += '<div class="ecalc-arguments">';
+			if (res.arguments.title) {
+				html += '<p class="ecalc-arguments-title">' + esc(res.arguments.title) + '</p>';
+			}
+			if (res.arguments.subtitle) {
+				html += '<p class="ecalc-arguments-subtitle">' + esc(res.arguments.subtitle) + '</p>';
+			}
+			html += '<ul class="ecalc-arguments-list">';
+			res.arguments.items.forEach(function (item) {
+				html += '<li>' + esc(item) + '</li>';
+			});
+			html += '</ul>';
+			if (res.arguments.summary) {
+				html += '<p class="ecalc-arguments-summary">' + esc(res.arguments.summary) + '</p>';
+			}
+			if (res.cta_url || res.cta_text) {
+				html += '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-arguments-cta ecalc-cta-btn ecalc-cta-btn--outline"'
+					+ ' data-gtm-id="ecalc-cta-consultation"'
+					+ ' rel="noopener"><span>' + esc(res.cta_text) + '</span></a>';
+			}
+			html += '</div>';
+		}
+
 		// ---- PACKAGES SECTION ----
 		if (res.packages && res.packages.length > 0) {
 			if (noMeetsPno) {
@@ -818,7 +855,7 @@
 		var fitsCls = pkg.fits_pno ? 'ecalc-package-pno--ok' : 'ecalc-package-pno--over';
 		var fitsMsg = pkg.fits_pno
 			? 'Vejde se do vašeho PNO (' + fmtPct(pkg.real_pno) + ')'
-			: 'Překračuje vaše PNO (' + fmtPct(pkg.real_pno) + ')';
+			: (cfg.pnoOverLabel || 'Nad vaším zadaným PNO') + ' (' + fmtPct(pkg.real_pno) + ')';
 
 		var html = '<div class="ecalc-package-card' + (isRec ? ' ecalc-package-card--recommended' : '') + '">';
 
@@ -904,11 +941,15 @@
 				+ ' rel="noopener">'
 				+ '<span>' + esc(ctaText || 'Konzultace zdarma') + '</span></a>';
 		}
+		var noteHtml = cfg.ctaConsultationNote
+			? '<p class="ecalc-stat-cta-note">' + esc(cfg.ctaConsultationNote) + '</p>'
+			: '';
 		return '<div class="ecalc-stat-card">'
 			+ '<p class="ecalc-stat-label">Doporučení</p>'
 			+ '<p class="ecalc-stat-value">Konzultace zdarma</p>'
 			+ '<p class="ecalc-stat-sub">pro detailní analýzu</p>'
 			+ btnHtml
+			+ noteHtml
 			+ '</div>';
 	}
 

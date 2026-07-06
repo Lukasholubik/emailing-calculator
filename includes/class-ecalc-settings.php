@@ -41,6 +41,24 @@ class ECAlc_Settings {
 			'phone_dialog_submit' => 'Pokračovat',
 			'phone_dialog_skip'   => 'Přeskočit',
 			'phone_dialog_error'  => 'Zadejte platné telefonní číslo (7–15 číslic).',
+			// Mikrocopy pod tlačítkem formuláře
+			'form_submit_note'     => 'Zdarma · Bez závazků · Výsledek za pár vteřin',
+			// Doplňkový text u CTA "Konzultace zdarma"
+			'cta_consultation_note' => '30 min – projdeme vaše čísla a návrh strategie',
+			// Poděkování po poptání balíčku
+			'inquiry_title'     => 'Děkujeme za zájem!',
+			'inquiry_pkg_label' => 'Poptáváte balíček:',
+			'inquiry_msg'       => 'Vaše poptávka byla odeslána. Ozveme se vám do 24 hodin a probereme detaily spolupráce.',
+			'inquiry_close'     => 'Zavřít',
+			'inquiry_visit'     => 'Přejít na web',
+			// Reference / sociální důkaz (např. Trustindex shortcode)
+			'social_proof_shortcode'      => '[trustindex no-registration=google]',
+			// Výchozí vypnuto – plný recenzní slider je nad tlačítkem formuláře příliš rušivý,
+			// zapnout jen pokud je k dispozici kompaktní verze widgetu (jen hvězdičky/počet).
+			'social_proof_enabled_form'   => 0,
+			'social_proof_enabled_result' => 1,
+			// Reálné PNO balíčku nad rámec zadaného PNO – neutrální formulace
+			'pno_over_label' => 'Nad vaším zadaným PNO',
 		];
 		$saved = get_option( 'ecalc_settings', [] );
 		return wp_parse_args( $saved, $defaults );
@@ -122,6 +140,16 @@ class ECAlc_Settings {
 
 	public function save_result_texts( array $data ): void {
 		update_option( 'ecalc_result_texts', $data );
+	}
+
+	public function get_arguments(): array {
+		$defaults = $this->default_arguments();
+		$saved    = get_option( 'ecalc_arguments', [] );
+		return wp_parse_args( $saved, $defaults );
+	}
+
+	public function save_arguments( array $data ): void {
+		update_option( 'ecalc_arguments', $data );
 	}
 
 	public function get_smartemailing(): array {
@@ -393,7 +421,7 @@ class ECAlc_Settings {
 				'id'          => 1,
 				'name'        => 'Startovací emailing',
 				'price'       => 15000,
-				'description' => 'Pro e-shopy, kde dává smysl začít se základní správou emailingu a postupně rozvíjet databázi i automatizace.',
+				'description' => 'Pro e-shopy, kde dává smysl začít se základní správou emailingu a postupně rozvíjet databázi i automatizace. První měřitelné výsledky obvykle do 60 dní.',
 				'items'       => [
 					'2x newsletter měsíčně',
 					'Až 3 automatizace',
@@ -409,7 +437,7 @@ class ECAlc_Settings {
 				'id'          => 2,
 				'name'        => 'Výkonnostní emailing',
 				'price'       => 22000,
-				'description' => 'Pro e-shopy s vyšším potenciálem, kde emailing může tvořit významnější část obratu a dává smysl aktivnější práce s kampaněmi, automatizacemi a segmentací.',
+				'description' => 'Pro e-shopy s vyšším potenciálem, kde emailing může tvořit významnější část obratu a dává smysl aktivnější práce s kampaněmi, automatizacemi a segmentací. Cílem je dlouhodobě růst obrat z emailingu, ne jen udržet status quo.',
 				'items'       => [
 					'4x newsletter měsíčně',
 					'Až 8 automatizací',
@@ -430,6 +458,31 @@ class ECAlc_Settings {
 			'result_title' => 'Výsledek vaší kalkulačky',
 			'low_potential' => 'Podle zadaných údajů má váš e-shop v emailingu určitý potenciál, ale při vámi zvoleném PNO by pravděpodobně nebylo možné pokrýt minimální náklady na smysluplnou správu emailingu. Doporučujeme bezplatnou konzultaci, kde společně ověříme, zda existuje cesta, jak potenciál navýšit – například růstem databáze, lepší prací s opakovaným nákupem nebo úpravou očekávání.',
 			'borderline'    => 'Výsledek je hraniční. Emailing může dávat smysl, ale při aktuálním obratu, velikosti databáze a vámi zvoleném PNO je potřeba návratnost detailněji ověřit. Nejbližší variantou je základní balíček, ale reálné PNO může být vyšší než vámi zadané. Doporučujeme konzultaci zdarma.',
+		];
+	}
+
+	private function default_arguments(): array {
+		return [
+			'enabled'  => 1,
+			'title'    => 'Proč máte tento potenciál',
+			'subtitle' => 'Toto jsou 3 hlavní důvody – nejde o kompletní výčet všech faktorů, které se do výpočtu promítají.',
+
+			'threshold_medium' => 0.34,
+			'threshold_high'   => 0.67,
+
+			'consumable_low'    => 'Váš sortiment ({consumable_percentage} opakovaného nákupu) je spíše jednorázový, přesto i zde funguje cross-sell a doporučené produkty na základě předchozích nákupů.',
+			'consumable_medium' => 'Přibližně {consumable_percentage} vašeho sortimentu se nakupuje opakovaně. I částečná automatizace (win-back kampaně, připomínky doplnění) dokáže zvednout obrat z e-mailingu.',
+			'consumable_high'   => 'Až {consumable_percentage} vašeho sortimentu tvoří zboží s opakovaným nákupem. To je ideální pro automatizované reorder sekvence a personalizovaná doporučení – tento faktor má na výpočet největší váhu (70 %) a právě u vás táhne potenciál nahoru.',
+
+			'database_low'    => 'Databáze {database_range} kontaktů je zatím menší, ale i tak lze stavět na uvítacích a nákupních sekvencích – s růstem databáze poroste i potenciál.',
+			'database_medium' => 'Databáze {database_range} kontaktů už umožňuje základní segmentaci podle chování a nákupní historie.',
+			'database_high'   => 'S databází {database_range} kontaktů máte dostatek dat pro jemnou segmentaci a personalizaci – větší databáze znamená přesnější cílení a vyšší návratnost.',
+
+			'segment_low'    => 'V oboru {segment} je e-mailing spíše doplňkový kanál, přesto dokáže zvýšit retenci a opakované nákupy.',
+			'segment_medium' => 'Obor {segment} má solidní potenciál pro e-mailing, zejména v kombinaci s personalizovanými nabídkami a sezónními kampaněmi.',
+			'segment_high'   => 'Ve vašem oboru ({segment}) je e-mailing dlouhodobě jeden z nejsilnějších prodejních kanálů – zákazníci nakupují v pravidelných cyklech, ideální pro replenishment a win-back automatizace.',
+
+			'summary' => 'Na základě těchto faktorů odhadujeme, že e-mailing může pro váš e-shop generovat {emailing_revenue_low} – {emailing_revenue_high} měsíčně, tedy {final_potential} vašeho obratu.',
 		];
 	}
 }

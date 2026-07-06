@@ -283,6 +283,7 @@ class ECAlc_REST {
 				'packages'            => $calc['packages'],
 				'cta_text'            => esc_html( $cfg['cta_text'] ),
 				'cta_url'             => esc_url( $cfg['cta_url'] ),
+				'arguments'           => $this->esc_arguments( $calc['arguments'] ?? [] ),
 			],
 		], 200 );
 	}
@@ -616,6 +617,18 @@ class ECAlc_REST {
 			return $recommended['result_text'];
 		}
 		return '';
+	}
+
+	private function esc_arguments( array $arguments ): array {
+		if ( empty( $arguments ) ) {
+			return [];
+		}
+		return [
+			'title'    => esc_html( $arguments['title'] ?? '' ),
+			'subtitle' => esc_html( $arguments['subtitle'] ?? '' ),
+			'items'    => array_map( 'esc_html', $arguments['items'] ?? [] ),
+			'summary'  => esc_html( $arguments['summary'] ?? '' ),
+		];
 	}
 
 	private function is_valid_shop_url( string $url ): bool {

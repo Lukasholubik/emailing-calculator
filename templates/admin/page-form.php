@@ -27,6 +27,55 @@
 							<p class="description">Použije se, pokud není vyplněna URL rezervace níže.</p>
 						</td>
 					</tr>
+					<tr>
+						<th><label for="cta_consultation_note">Doplňkový text pod CTA konzultace</label></th>
+						<td>
+							<input type="text" id="cta_consultation_note" name="cta_consultation_note" value="<?php echo esc_attr( $cfg['cta_consultation_note'] ?? '' ); ?>" class="regular-text">
+							<p class="description">Např. délka a náplň schůzky – snižuje váhání před kliknutím.</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="ecalc-settings-section">
+				<h2>Mikrocopy formuláře</h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="form_submit_note">Text pod tlačítkem „Vypočítat"</label></th>
+						<td>
+							<input type="text" id="form_submit_note" name="form_submit_note" value="<?php echo esc_attr( $cfg['form_submit_note'] ?? '' ); ?>" class="regular-text">
+							<p class="description">Trust signály – např. „Zdarma · Bez závazků · Výsledek za pár vteřin".</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pno_over_label">Popisek při překročení PNO balíčkem</label></th>
+						<td>
+							<input type="text" id="pno_over_label" name="pno_over_label" value="<?php echo esc_attr( $cfg['pno_over_label'] ?? 'Nad vaším zadaným PNO' ); ?>" class="regular-text">
+							<p class="description">Zobrazí se u balíčku, jehož reálné PNO je vyšší než zadané. Neutrální formulace místo alarmujícího „Překračuje".</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="ecalc-settings-section">
+				<h2>Reference / sociální důkaz</h2>
+				<p class="description">Funguje s libovolným pluginem na reference (např. Trustindex). Stejný shortcode se použije na obou místech níže – pokud potřebuješ jinou verzi widgetu pro formulář a jinou pro výsledek, uprav přímo v šabloně.</p>
+				<table class="form-table">
+					<tr>
+						<th><label for="social_proof_shortcode">Shortcode</label></th>
+						<td><input type="text" id="social_proof_shortcode" name="social_proof_shortcode" value="<?php echo esc_attr( $cfg['social_proof_shortcode'] ?? '' ); ?>" class="large-text" placeholder="[trustindex no-registration=google]"></td>
+					</tr>
+					<tr>
+						<th>Zobrazit u formuláře</th>
+						<td>
+							<label><input type="checkbox" name="social_proof_enabled_form" value="1" <?php checked( ! empty( $cfg['social_proof_enabled_form'] ) ); ?>> Zobrazovat v formuláři nad tlačítkem „Vypočítat"</label>
+							<p class="description">Zobrazí se celý shortcode tak, jak ho Trustindex (nebo jiný plugin) vykreslí – nad tlačítkem se hodí jen kompaktní widget (hvězdičky + počet hodnocení), ne celý slider s recenzemi. Pokud takový kompaktní widget nemáš, nech vypnuté.</p>
+						</td>
+					</tr>
+					<tr>
+						<th>Zobrazit u výsledku</th>
+						<td><label><input type="checkbox" name="social_proof_enabled_result" value="1" <?php checked( ! empty( $cfg['social_proof_enabled_result'] ) ); ?>> Zobrazovat na obrazovce výsledků</label></td>
+					</tr>
 				</table>
 			</div>
 
@@ -116,6 +165,36 @@
 							<input type="text" id="update_banner" name="update_banner" value="<?php echo esc_attr( $cfg['update_banner'] ?? 'Váš záznam byl aktualizován na základě nového výpočtu.' ); ?>" class="large-text">
 							<p class="description">Zobrazí se v sekci výsledků po přepočtu existujícího záznamu.</p>
 						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="ecalc-settings-section">
+				<h2>Poděkování po poptání balíčku</h2>
+				<p class="description">Texty zobrazené po odeslání poptávky balíčku (po vyplnění/přeskočení telefonu).</p>
+				<table class="form-table">
+					<tr>
+						<th><label for="inquiry_title">Nadpis</label></th>
+						<td><input type="text" id="inquiry_title" name="inquiry_title" value="<?php echo esc_attr( $cfg['inquiry_title'] ?? 'Děkujeme za zájem!' ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th><label for="inquiry_pkg_label">Popisek poptávaného balíčku</label></th>
+						<td><input type="text" id="inquiry_pkg_label" name="inquiry_pkg_label" value="<?php echo esc_attr( $cfg['inquiry_pkg_label'] ?? 'Poptáváte balíček:' ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th><label for="inquiry_msg">Text zprávy</label></th>
+						<td>
+							<input type="text" id="inquiry_msg" name="inquiry_msg" value="<?php echo esc_attr( $cfg['inquiry_msg'] ?? '' ); ?>" class="large-text">
+							<p class="description">Slibujte jen reálně dodržitelnou dobu odezvy – konkrétní čas zvyšuje důvěru.</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="inquiry_close">Text tlačítka „Zavřít"</label></th>
+						<td><input type="text" id="inquiry_close" name="inquiry_close" value="<?php echo esc_attr( $cfg['inquiry_close'] ?? 'Zavřít' ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th><label for="inquiry_visit">Text tlačítka „Přejít na web"</label></th>
+						<td><input type="text" id="inquiry_visit" name="inquiry_visit" value="<?php echo esc_attr( $cfg['inquiry_visit'] ?? 'Přejít na web' ); ?>" class="regular-text"></td>
 					</tr>
 				</table>
 			</div>

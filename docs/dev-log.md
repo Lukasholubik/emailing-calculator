@@ -76,6 +76,55 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-07-06 – Copywriter/SEO/UX review: konverzní vylepšení formuláře i výsledků
+
+**Soubory:** `includes/class-ecalc-settings.php`, `includes/class-ecalc-plugin.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-shortcode.php`, `templates/frontend-form.php`, `templates/admin/page-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`
+
+**Co bylo uděláno (fáze 1 – vyplnění formuláře):**
+1. Progress indikátor vyplnění (`.ecalc-progress-wrap`) – navázán na existující `ABANDON_STEPS`/`furthestStep` step-tracking (`reachStep()` teď volá i `updateProgressUI()`), žádná nová logika sběru dat.
+2. Label PNO přejmenován na „Kolik % z tržeb chcete investovat do emailingu? (PNO)" – srozumitelnější pro laika.
+3. Slider spotřebního zboží – přidán hint s konkrétními příklady (0 % = nábytek/elektronika, 50 % = smíšený sortiment, 100 % = drogerie/doplňky stravy/krmivo).
+4. Mikrocopy pod tlačítkem „Vypočítat" – nové nastavení `form_submit_note` (výchozí „Zdarma · Bez závazků · Výsledek za pár vteřin").
+5. Sociální důkaz – nová nastavení `social_proof_shortcode`/`social_proof_enabled_form`/`social_proof_enabled_result` v `ecalc_settings`. Shortcode (Trustindex `[trustindex no-registration=google]`) se renderuje přes `do_shortcode()` staticky v `frontend-form.php` – jednou v info panelu (`.ecalc-info-col`), jednou jako trvalý sourozenec `#ecalc-result-inner` uvnitř `#ecalc-result` (zobrazí/skryje se spolu s celým výsledkovým sloupcem, JS jen manipuluje `display` rodiče).
+
+**Co bylo uděláno (fáze 2 – konverze po výsledku):**
+6. `pno_over_label` – nahrazuje alarmující „Překračuje vaše PNO" neutrálním „Nad vaším zadaným PNO" u `buildPackageCard()`; barva badge změněna z červené na jantarovou (`.ecalc-package-pno--over`).
+7. `inquiry_msg` – konkrétní slib „Ozveme se vám do 24 hodin" místo vágního „v nejbližší možné době". Tyto texty (`inquiry_title/pkg_label/msg/close/visit`) byly dřív **hardcoded** v `class-ecalc-plugin.php` – nyní čtou z `ecalc_settings` (editovatelné v adminu).
+8. `cta_consultation_note` – doplňkový text u CTA konzultace („30 min – projdeme vaše čísla a návrh strategie"), zobrazí se v `consultationStatCard()`.
+9. Sekce „Proč máte tento potenciál" (viz předchozí záznam) dostala vlastní sekundární CTA tlačítko (`.ecalc-arguments-cta`, outline varianta) – dřív bylo CTA jen na konci stránky.
+10. Benefit věta doplněna do popisu obou balíčků (`ecalc_packages`) – **patchnuto přímo v DB** (ne jen v defaultech), protože option už byl na tomto webu uložený a `get_packages()` needoplňuje `description` z defaultů.
+
+**Nové admin UI:** Formulář & CTA → sekce „Mikrocopy formuláře", „Reference / sociální důkaz", „Poděkování po poptání balíčku" + nové pole u CTA konzultace.
+
+**Ověřeno:** živé vykreslení stránky `/kalkulacka/` (do_shortcode Trustindexu skutečně vykreslil recenze), PHP/JS syntax checky.
+
+**Pozor na:** Trustindex shortcode se renderuje 2× na stránce (info panel + výsledek), oba instance generují stejný `<template id="trustindex-google-widget-html">`. HTML duplicitní ID není ideální, ale template obsah není live DOM (inertní), a `data-src` loader mechanismus Trustindexu je stavěný na více instancí na stránce – funkčně by to mělo být v pořádku, ale stálo by za vizuální ověření po nasazení na produkci.
+
+**Odloženo (na příště):** Velká restrukturalizace formuláře – přesun jména/e-mailu až na konec (nejdřív byznysová data, kontakt až před zobrazením detailního rozboru). Uživatel potvrdil, že tohle chce řešit jako další krok, ne v rámci téhle session – je to zásah do ukládání leadu, abandonment trackingu i analytiky, chce vlastní projekt.
+
+**Dodatečná úprava – mobile first (web má 70 % provozu z mobilu):** Reference u formuláře byly původně navrženy do `.ecalc-info-col` (postranní tmavá karta). Layout se ale pod `800px` řadí do jednoho sloupce v pořadí formulář (`grid-row: 1`) → info panel (`row: 2`) → výsledek (`row: 3`) – protože tlačítko „Vypočítat" je součástí formuláře, na mobilu by se reference zobrazily **až za tlačítkem**, tedy v momentě, kdy už nemají na rozhodnutí žádný vliv. Přesunuto: sociální důkaz (`.ecalc-social-proof-inline`) je nyní přímo uvnitř `<form>`, těsně nad tlačítkem – funguje shodně na mobilu i desktopu, žádná duplicita widgetu na pre-submission straně (jen `.ecalc-social-proof-result` zůstává u výsledku). Soubory: `templates/frontend-form.php`, `assets/css/frontend.css`, `templates/admin/page-form.php` (upravený popisek nastavení).
+
+---
+
+### 2026-07-06 – Sekce "Proč máte tento potenciál" (argumenty u pozitivního/hraničního výsledku)
+
+**Soubory:** `includes/class-ecalc-settings.php`, `includes/class-ecalc-calculator.php`, `includes/class-ecalc-rest.php`, `includes/class-ecalc-admin.php`, `templates/admin/page-arguments.php`, `assets/js/frontend.js`, `assets/css/frontend.css`
+
+**Co bylo uděláno:**
+1. Nová option `ecalc_arguments` (`ECAlc_Settings::get_arguments()/save_arguments()`) – texty pro 3 faktory výpočtu (spotřební zboží, databáze, segment) × 3 pásma skóre (nízké/střední/vysoké) + shrnující věta + 2 prahy pásem (`threshold_medium` 0,34, `threshold_high` 0,67) + zapnuto/vypnuto.
+2. `ECAlc_Calculator::build_arguments()` – po výpočtu vybere pásmo pro `consumable_score`, `database_score`, `segment_score` (metoda `score_band()`), dosadí placeholdery přes existující `ecalc_replace_variables()` a vrátí `['title', 'items' => [...], 'summary']`. Počítá se jen pro `result_type` = `package_1` / `package_n` / `borderline` (u `low_potential` se nezobrazuje).
+3. REST `/calculate` – přidán klíč `result.arguments` (escapováno přes novou privátní metodu `esc_arguments()` v `class-ecalc-rest.php`).
+4. Nová admin stránka **Argumenty** (`ecalc_arguments`, submenu vedle „Texty výsledků") – textarea na každý ze 3×3 textů + shrnutí, konfigurace prahů pásem.
+5. `frontend.js` `buildResultHTML()` – nová sekce `.ecalc-arguments` mezi `res.text` a sekcí balíčků, renderuje se jen když `res.arguments.items` není prázdné.
+
+**Proč:** Uživatel chtěl u doporučeného balíčku vysvětlit *proč* má e-shop daný potenciál – konkrétní argumenty k opakovanému nákupu, velikosti databáze a oboru, ne jen číslo.
+
+**Pozor na:** Placeholder `{consumable_percentage}` (i `{final_potential}` apod.) v `ecalc_replace_variables()` už sám přidává „ %" – v textech se nesmí psát `{consumable_percentage} %` (vzniklo by „80 % %"). Ověřeno přímým voláním `ECAlc_Calculator::calculate()` s testovacími daty (package_n i low_potential scénář).
+
+**Doplněno:** Přidáno pole `subtitle` (`ecalc_arguments`) – vysvětlivka pod nadpisem sekce, výchozí text jasně říká, že jde o „3 hlavní důvody – nejde o kompletní výčet", aby bylo zřejmé, že existují i další faktory mimo tyto tři.
+
+---
+
 ### 2026-06-25 – SmartEmailing: Nízký potenciál – hodnota balíčku + odeslání bez souhlasu
 
 **Soubory:** `includes/class-ecalc-settings.php`, `includes/class-ecalc-smartemailing.php`, `includes/class-ecalc-admin.php`, `templates/admin/page-smartemailing.php`

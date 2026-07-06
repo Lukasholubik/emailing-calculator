@@ -3,6 +3,26 @@
 VĹˇechny vĂ˝raznĂ© zmÄ›ny jsou dokumentovĂˇny v tomto souboru.
 FormĂˇt dle [Keep a Changelog](https://keepachangelog.com/cs/1.0.0/).
 
+## [1.5.8] – 2026-07-06
+
+### Přidáno
+- Konverzní/UX/copy vylepšení formuláře i výsledků (copywriter+SEO+UX review):
+  - Progress indikátor vyplnění formuláře (navazuje na existující step-tracking)
+  - Přejmenován label PNO na srozumitelnější formulaci + příklady u slideru spotřebního zboží
+  - Mikrocopy pod tlačítkem „Vypočítat" (trust signály), konfigurovatelné
+  - Sociální důkaz (Trustindex nebo jiný shortcode) v info panelu i na obrazovce výsledků – nové nastavení v admin → Formulář & CTA
+  - Doplňkový text u CTA konzultace (délka/náplň schůzky)
+  - Konkrétní slib odezvy po poptání balíčku (do 24 hodin) místo vágní formulace, nyní editovatelné v adminu
+  - Neutrální formulace u balíčku s vyšším reálným PNO než zadané (dřív alarmující „Překračuje")
+  - Druhé CTA tlačítko přímo v sekci „Proč máte tento potenciál"
+  - Benefit-driven věta doplněna do popisů obou balíčků
+
+## [1.5.7] – 2026-07-06
+
+### Přidáno
+- U pozitivního a hraničního výsledku se nově zobrazuje sekce „Proč máte tento potenciál" – 3 argumentační body (opakovaný nákup, databáze kontaktů, obor podnikání) + shrnující věta s odhadovaným obratem
+- Nová admin stránka **Argumenty** (Nastavení obsahu → Argumenty) – texty pro nízké/střední/vysoké pásmo každého faktoru, konfigurovatelné prahy pásem, možnost sekci vypnout
+
 ## [1.5.6] – 2026-06-25
 
 ### Přidáno

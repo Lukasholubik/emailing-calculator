@@ -29,6 +29,7 @@ class ECAlc_Admin {
 		add_action( 'admin_post_ecalc_save_revenue_ranges', [ $this, 'save_revenue_ranges' ] );
 		add_action( 'admin_post_ecalc_save_packages', [ $this, 'save_packages' ] );
 		add_action( 'admin_post_ecalc_save_result_texts', [ $this, 'save_result_texts' ] );
+		add_action( 'admin_post_ecalc_save_arguments', [ $this, 'save_arguments' ] );
 		add_action( 'admin_post_ecalc_save_smartemailing', [ $this, 'save_smartemailing' ] );
 		add_action( 'admin_post_ecalc_save_appearance', [ $this, 'save_appearance' ] );
 		add_action( 'admin_post_ecalc_save_notifications', [ $this, 'save_notifications' ] );
@@ -71,6 +72,7 @@ class ECAlc_Admin {
 			[ 'ecalc_group_content',   'Nastavení obsahu',  [ $this, 'page_group_content' ] ],
 			[ 'ecalc_packages',        'Balíčky',           [ $this, 'page_packages' ] ],
 			[ 'ecalc_result_texts',    'Texty výsledků',    [ $this, 'page_result_texts' ] ],
+			[ 'ecalc_arguments',       'Argumenty',         [ $this, 'page_arguments' ] ],
 			[ 'ecalc_form',            'Formulář & CTA',    [ $this, 'page_form' ] ],
 			[ 'ecalc_info_panel',      'Info panel',        [ $this, 'page_info_panel' ] ],
 			// Samostatné záložky
@@ -90,7 +92,7 @@ class ECAlc_Admin {
 		$our_pages = [
 			'ecalc_overview', 'ecalc_leads', 'ecalc_settings', 'ecalc_segments',
 			'ecalc_database_ranges', 'ecalc_revenue_ranges', 'ecalc_packages',
-			'ecalc_result_texts', 'ecalc_form', 'ecalc_notifications', 'ecalc_smartemailing',
+			'ecalc_result_texts', 'ecalc_arguments', 'ecalc_form', 'ecalc_notifications', 'ecalc_smartemailing',
 			'ecalc_appearance', 'ecalc_info_panel', 'ecalc_security', 'ecalc_gtm',
 		];
 
@@ -689,6 +691,17 @@ class ECAlc_Admin {
 			'phone_dialog_submit'        => sanitize_text_field( $_POST['phone_dialog_submit'] ?? 'Pokračovat' ),
 			'phone_dialog_skip'          => sanitize_text_field( $_POST['phone_dialog_skip']   ?? 'Přeskočit' ),
 			'phone_dialog_error'         => sanitize_text_field( $_POST['phone_dialog_error']  ?? 'Zadejte platné telefonní číslo (7–15 číslic).' ),
+			'form_submit_note'           => sanitize_text_field( $_POST['form_submit_note']       ?? '' ),
+			'cta_consultation_note'      => sanitize_text_field( $_POST['cta_consultation_note']  ?? '' ),
+			'inquiry_title'              => sanitize_text_field( $_POST['inquiry_title']     ?? 'Děkujeme za zájem!' ),
+			'inquiry_pkg_label'          => sanitize_text_field( $_POST['inquiry_pkg_label'] ?? 'Poptáváte balíček:' ),
+			'inquiry_msg'                => sanitize_text_field( $_POST['inquiry_msg']       ?? '' ),
+			'inquiry_close'              => sanitize_text_field( $_POST['inquiry_close']     ?? 'Zavřít' ),
+			'inquiry_visit'              => sanitize_text_field( $_POST['inquiry_visit']     ?? 'Přejít na web' ),
+			'pno_over_label'             => sanitize_text_field( $_POST['pno_over_label'] ?? 'Nad vaším zadaným PNO' ),
+			'social_proof_enabled_form'   => ! empty( $_POST['social_proof_enabled_form'] ) ? 1 : 0,
+			'social_proof_enabled_result' => ! empty( $_POST['social_proof_enabled_result'] ) ? 1 : 0,
+			'social_proof_shortcode'      => sanitize_text_field( $_POST['social_proof_shortcode'] ?? '' ),
 		] );
 
 		$this->settings->save_settings( $current );
@@ -885,6 +898,44 @@ class ECAlc_Admin {
 
 		$this->settings->save_result_texts( $data );
 		wp_redirect( admin_url( 'admin.php?page=ecalc_result_texts&saved=1' ) );
+		exit;
+	}
+
+	// -------------------------------------------------------------------------
+	// ARGUMENTY (proč máte tento potenciál)
+	// -------------------------------------------------------------------------
+
+	public function page_arguments(): void {
+		$this->capability_check();
+		$args   = $this->settings->get_arguments();
+		$notice = $this->get_notice();
+		$this->render_template( 'admin/page-arguments.php', compact( 'args', 'notice' ) );
+	}
+
+	public function save_arguments(): void {
+		$this->capability_check();
+		check_admin_referer( 'ecalc_save_arguments' );
+
+		$data = [
+			'enabled'           => ! empty( $_POST['enabled'] ) ? 1 : 0,
+			'title'             => sanitize_text_field( $_POST['title'] ?? '' ),
+			'subtitle'          => sanitize_text_field( $_POST['subtitle'] ?? '' ),
+			'threshold_medium'  => ecalc_clamp( (float) str_replace( ',', '.', $_POST['threshold_medium'] ?? '0.34' ), 0, 1 ),
+			'threshold_high'    => ecalc_clamp( (float) str_replace( ',', '.', $_POST['threshold_high'] ?? '0.67' ), 0, 1 ),
+			'consumable_low'    => sanitize_textarea_field( $_POST['consumable_low'] ?? '' ),
+			'consumable_medium' => sanitize_textarea_field( $_POST['consumable_medium'] ?? '' ),
+			'consumable_high'   => sanitize_textarea_field( $_POST['consumable_high'] ?? '' ),
+			'database_low'      => sanitize_textarea_field( $_POST['database_low'] ?? '' ),
+			'database_medium'   => sanitize_textarea_field( $_POST['database_medium'] ?? '' ),
+			'database_high'     => sanitize_textarea_field( $_POST['database_high'] ?? '' ),
+			'segment_low'       => sanitize_textarea_field( $_POST['segment_low'] ?? '' ),
+			'segment_medium'    => sanitize_textarea_field( $_POST['segment_medium'] ?? '' ),
+			'segment_high'      => sanitize_textarea_field( $_POST['segment_high'] ?? '' ),
+			'summary'           => sanitize_textarea_field( $_POST['summary'] ?? '' ),
+		];
+
+		$this->settings->save_arguments( $data );
+		wp_redirect( admin_url( 'admin.php?page=ecalc_arguments&saved=1' ) );
 		exit;
 	}
 

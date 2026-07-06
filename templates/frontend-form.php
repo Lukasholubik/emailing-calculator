@@ -20,6 +20,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<h2 class="ecalc-form-title">Zjistěte potenciál emailingu pro váš e-shop</h2>
 				<p class="ecalc-form-subtitle">Orientační kalkulačka vám ukáže, jaký výkon může emailing pro váš e-shop dosahovat a jaký balíček dává podle zadaných údajů smysl.</p>
 
+				<div class="ecalc-progress-wrap" aria-hidden="true">
+					<div class="ecalc-progress-bar"><div class="ecalc-progress-fill" id="ecalc-progress-fill"></div></div>
+					<p class="ecalc-progress-text" id="ecalc-progress-text">Vyplněno 0 %</p>
+				</div>
+
 				<form id="ecalc-form" novalidate>
 					<!-- Honeypot ochrana proti spamu -->
 					<div class="ecalc-honeypot" aria-hidden="true">
@@ -81,6 +86,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</div>
 						</div>
 						<input type="hidden" id="ecalc-consumable-percentage" name="consumable_percentage" value="50">
+						<p class="ecalc-hint">Např. 0 % = nábytek, elektronika · 50 % = smíšený sortiment · 100 % = drogerie, doplňky stravy, krmivo pro zvířata.</p>
 						<span class="ecalc-error-msg" id="ecalc-error-consumable"></span>
 					</div>
 
@@ -123,10 +129,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</div>
 
 					<div class="ecalc-field">
-						<label class="ecalc-label" for="ecalc-pno">Očekávané PNO (%) <span class="ecalc-required">*</span></label>
+						<label class="ecalc-label" for="ecalc-pno">Kolik % z tržeb chcete investovat do emailingu? (PNO) <span class="ecalc-required">*</span></label>
 						<input class="ecalc-input ecalc-input--short" type="number" id="ecalc-pno" name="expected_pno"
 							placeholder="např. 10" min="1" max="100" step="1" required>
-						<p class="ecalc-hint">Podíl nákladů na obratu. Například 10 % = chcete, aby cena za emailing tvořila max. 10 % z tržeb.</p>
+						<p class="ecalc-hint">Např. 10 % = cena za emailing má tvořit max. 10 % z tržeb, které emailing vygeneruje.</p>
 						<span class="ecalc-error-msg" id="ecalc-error-pno"></span>
 					</div>
 
@@ -155,11 +161,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</div>
 					<?php endif; ?>
 
+					<?php if ( ! empty( $cfg['social_proof_enabled_form'] ) && ! empty( $cfg['social_proof_shortcode'] ) ) : ?>
+						<div class="ecalc-social-proof-inline">
+							<?php echo do_shortcode( $cfg['social_proof_shortcode'] ); ?>
+						</div>
+					<?php endif; ?>
+
 					<button type="submit" class="ecalc-button" id="ecalc-submit"
 						data-gtm-id="ecalc-form-submit">
 						<span id="ecalc-btn-text">Vypočítat potenciál emailingu</span>
 						<span id="ecalc-btn-loader" style="display:none;">Počítám...</span>
 					</button>
+					<?php if ( ! empty( $cfg['form_submit_note'] ) ) : ?>
+						<p class="ecalc-submit-note"><?php echo esc_html( $cfg['form_submit_note'] ); ?></p>
+					<?php endif; ?>
 				</form>
 			</div>
 		</div>
@@ -182,6 +197,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<!-- ===================== VÝSLEDEK ===================== -->
 		<div class="ecalc-result-col" id="ecalc-result" style="display:none;">
 			<div id="ecalc-result-inner"></div>
+			<?php if ( ! empty( $cfg['social_proof_enabled_result'] ) && ! empty( $cfg['social_proof_shortcode'] ) ) : ?>
+				<div class="ecalc-card ecalc-social-proof-card ecalc-social-proof-result">
+					<?php echo do_shortcode( $cfg['social_proof_shortcode'] ); ?>
+				</div>
+			<?php endif; ?>
 		</div>
 	</div>
 </div>

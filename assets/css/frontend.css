@@ -141,6 +141,32 @@
 	font-size: 0.92rem;
 }
 
+/* Progress indikátor vyplnění formuláře */
+.ecalc-progress-wrap {
+	margin-bottom: 24px;
+}
+
+.ecalc-progress-bar {
+	height: 6px;
+	background: var(--ecalc-gray-200);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.ecalc-progress-fill {
+	height: 100%;
+	width: 0;
+	background: var(--ecalc-primary);
+	border-radius: 999px;
+	transition: width 0.3s ease;
+}
+
+.ecalc-progress-text {
+	font-size: 0.76rem;
+	color: var(--ecalc-gray-400);
+	margin: 6px 0 0;
+}
+
 /* Fields */
 .ecalc-field {
 	margin-bottom: 22px;
@@ -431,6 +457,30 @@
 .ecalc-wrapper .ecalc-button:disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
+}
+
+.ecalc-submit-note {
+	text-align: center;
+	font-size: 0.78rem;
+	color: var(--ecalc-gray-400);
+	margin: 10px 0 0;
+}
+
+/* Reference / sociální důkaz (Trustindex apod.) */
+.ecalc-social-proof-card {
+	margin-top: 16px;
+	overflow: hidden;
+}
+
+.ecalc-social-proof-result {
+	margin-top: 28px;
+}
+
+/* Reference přímo ve formuláři, nad tlačítkem (zobrazí se jen pokud je v adminu zapnuté
+   a je nastavený kompaktní shortcode – celý recenzní slider je na tomto místě příliš rušivý). */
+.ecalc-social-proof-inline {
+	margin-bottom: 16px;
+	overflow: hidden;
 }
 
 /* Notice */
@@ -783,6 +833,12 @@
 	text-decoration: none;
 }
 
+.ecalc-stat-cta-note {
+	font-size: 0.74rem;
+	color: var(--ecalc-gray-400);
+	margin: 8px 0 0;
+}
+
 .ecalc-budget-pno-alert {
 	display: flex;
 	flex-direction: column;
@@ -842,6 +898,68 @@
 .ecalc-result-text--danger {
 	border-left-color: var(--ecalc-red);
 	background: #fef2f2;
+}
+
+/* Argumenty – proč máte tento potenciál */
+.ecalc-arguments {
+	background: var(--ecalc-gray-50);
+	border-radius: 8px;
+	padding: 20px 24px;
+	margin-bottom: 28px;
+}
+
+.ecalc-arguments-title {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--ecalc-gray-800);
+	margin: 0 0 4px;
+}
+
+.ecalc-arguments-subtitle {
+	font-size: 0.8rem;
+	color: var(--ecalc-gray-400);
+	margin: 0 0 14px;
+	line-height: 1.5;
+}
+
+.ecalc-arguments-list {
+	list-style: none;
+	margin: 0 0 14px;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.ecalc-arguments-list li {
+	position: relative;
+	padding-left: 22px;
+	font-size: 0.9rem;
+	color: var(--ecalc-gray-600);
+	line-height: 1.6;
+}
+
+.ecalc-arguments-list li::before {
+	content: '✓';
+	position: absolute;
+	left: 0;
+	top: 0;
+	color: var(--ecalc-primary);
+	font-weight: 700;
+}
+
+.ecalc-arguments-summary {
+	margin: 0;
+	padding-top: 14px;
+	border-top: 1px solid var(--ecalc-gray-200);
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--ecalc-gray-800);
+	line-height: 1.6;
+}
+
+.ecalc-arguments-cta {
+	margin-top: 18px;
 }
 
 /* Summary – nenápadné shrnutí */
@@ -954,8 +1072,8 @@
 }
 
 .ecalc-package-pno--over {
-	background: #fee2e2;
-	color: var(--ecalc-red);
+	background: #fef3c7;
+	color: #92400e;
 }
 
 .ecalc-package-desc {
@@ -1023,6 +1141,18 @@
 	color: var(--ecalc-btn-color-hover, #4de5c4);
 	border-color: var(--ecalc-btn-border-hover, #4de5c4);
 	text-decoration: none;
+}
+
+.ecalc-wrapper .ecalc-cta-btn--outline {
+	background: var(--ecalc-btn2-bg, transparent);
+	color: var(--ecalc-btn2-color, #4de5c4);
+	border-color: var(--ecalc-btn2-border, #4de5c4);
+}
+
+.ecalc-wrapper .ecalc-cta-btn--outline:hover {
+	background: var(--ecalc-btn2-bg-hover, #4de5c4);
+	color: var(--ecalc-btn2-color-hover, #352830);
+	border-color: var(--ecalc-btn2-border-hover, #4de5c4);
 }
 
 /* ===== INQUIRY THANK-YOU POPUP ===== */

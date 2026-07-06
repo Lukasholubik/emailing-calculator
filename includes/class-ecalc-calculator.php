@@ -55,6 +55,13 @@ class ECAlc_Calculator {
 		$recommended_price    = $recommended_pkg ? (float) $recommended_pkg['price'] : 0.0;
 		$recommended_real_pno = $recommended_pkg ? (float) $recommended_pkg['real_pno'] : 0.0;
 
+		$arguments = $this->build_arguments( $result_type, $input, $consumable_score, $database_score, $segment_score, [
+			'final_potential'       => $final_potential,
+			'emailing_revenue_low'  => $emailing_revenue_low,
+			'emailing_revenue_mid'  => $emailing_revenue_mid,
+			'emailing_revenue_high' => $emailing_revenue_high,
+		] );
+
 		return [
 			'consumable_score'             => round( $consumable_score, 4 ),
 			'database_score'               => round( $database_score, 4 ),
@@ -71,6 +78,7 @@ class ECAlc_Calculator {
 			'recommended_package_name'     => $recommended_name,
 			'recommended_package_price'    => $recommended_price,
 			'recommended_package_real_pno' => $recommended_real_pno,
+			'arguments'                    => $arguments,
 		];
 	}
 
@@ -184,5 +192,45 @@ class ECAlc_Calculator {
 			}
 		}
 		return null;
+	}
+
+	private function build_arguments( string $result_type, array $input, float $consumable_score, float $database_score, float $segment_score, array $revenue_data ): array {
+		if ( ! in_array( $result_type, [ 'package_1', 'package_n', 'borderline' ], true ) ) {
+			return [];
+		}
+
+		$cfg = $this->settings->get_arguments();
+		if ( empty( $cfg['enabled'] ) ) {
+			return [];
+		}
+
+		$placeholder_data = array_merge( $input, $revenue_data );
+
+		$consumable_band = $this->score_band( $consumable_score, $cfg );
+		$database_band   = $this->score_band( $database_score, $cfg );
+		$segment_band    = $this->score_band( $segment_score, $cfg );
+
+		$items = array_filter( [
+			ecalc_replace_variables( $cfg[ 'consumable_' . $consumable_band ] ?? '', $placeholder_data ),
+			ecalc_replace_variables( $cfg[ 'database_' . $database_band ] ?? '', $placeholder_data ),
+			ecalc_replace_variables( $cfg[ 'segment_' . $segment_band ] ?? '', $placeholder_data ),
+		] );
+
+		return [
+			'title'    => $cfg['title'] ?? '',
+			'subtitle' => $cfg['subtitle'] ?? '',
+			'items'    => array_values( $items ),
+			'summary'  => ecalc_replace_variables( $cfg['summary'] ?? '', $placeholder_data ),
+		];
+	}
+
+	private function score_band( float $score, array $cfg ): string {
+		if ( $score >= (float) $cfg['threshold_high'] ) {
+			return 'high';
+		}
+		if ( $score >= (float) $cfg['threshold_medium'] ) {
+			return 'medium';
+		}
+		return 'low';
 	}
 }
