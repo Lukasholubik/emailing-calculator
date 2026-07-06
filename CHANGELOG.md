@@ -3,6 +3,12 @@
 VĹˇechny vĂ˝raznĂ© zmÄ›ny jsou dokumentovĂˇny v tomto souboru.
 FormĂˇt dle [Keep a Changelog](https://keepachangelog.com/cs/1.0.0/).
 
+## [1.5.9] – 2026-07-06
+
+### Změněno
+- Formulář: pole URL e-shopu, Jméno a E-mail přesunuta až za byznysová data (obor, spotřební %, databáze, obrat, PNO), těsně před souhlasy – uživatel nejdřív vidí hodnotu (vyplňuje čísla o svém e-shopu), kontakt zadává až na konec. Přidána přechodová věta „Skvělé, teď už jen kontakt pro zaslání výsledků:".
+- Analytika kroků formuláře (abandonment tracking, progress bar) přeuspořádána, aby odpovídala novému pořadí polí.
+
 ## [1.5.8] – 2026-07-06
 
 ### Přidáno

@@ -13,7 +13,7 @@
 	var formConverted   = false;
 	var exitBeaconFired = false;
 	var maxScrollPct    = 0;
-	var ABANDON_STEPS   = ['initial', 'name', 'email', 'shop_url', 'segment', 'database', 'revenue', 'consumable', 'pno', 'consent'];
+	var ABANDON_STEPS   = ['initial', 'segment', 'consumable', 'database', 'revenue', 'pno', 'shop_url', 'name', 'email', 'consent'];
 
 	// -------------------------------------------------------------------------
 	// GTM dataLayer helper
@@ -86,15 +86,15 @@
 		if (!document.getElementById('ecalc-form')) return;
 
 		var fieldSteps = [
-			['ecalc-name',              'focus',  'name'],
-			['ecalc-email',             'focus',  'email'],
-			['ecalc-shop-url',          'focus',  'shop_url'],
 			['ecalc-segment',           'change', 'segment'],
+			['ecalc-consumable-slider', 'input',  'consumable'],
 			['ecalc-database-range',    'change', 'database'],
 			['ecalc-revenue-range',     'change', 'revenue'],
 			['ecalc-revenue-exact',     'focus',  'revenue'],
-			['ecalc-consumable-slider', 'input',  'consumable'],
 			['ecalc-pno',               'focus',  'pno'],
+			['ecalc-shop-url',          'focus',  'shop_url'],
+			['ecalc-name',              'focus',  'name'],
+			['ecalc-email',             'focus',  'email'],
 			['ecalc-consent-data',      'change', 'consent'],
 		];
 		fieldSteps.forEach(function (triple) {

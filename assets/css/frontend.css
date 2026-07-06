@@ -172,6 +172,15 @@
 	margin-bottom: 22px;
 }
 
+.ecalc-contact-divider {
+	margin: 4px 0 18px;
+	padding-top: 18px;
+	border-top: 1px solid var(--ecalc-gray-200);
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--ecalc-gray-600);
+}
+
 .ecalc-label {
 	display: block;
 	font-weight: 600;

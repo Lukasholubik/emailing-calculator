@@ -76,6 +76,20 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-07-06 – Formulář: přesun kontaktních polí (URL, jméno, e-mail) na konec
+
+**Soubory:** `templates/frontend-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`
+
+**Co bylo uděláno:** Pole URL e-shopu, Jméno a E-mail byla přesunuta z horní části formuláře až za PNO, těsně před souhlasy – uživatel nejdřív vyplní byznysová data (obor, spotřební %, databáze, obrat, PNO) a teprve na konci kontakt. Přidána přechodová věta „Skvělé, teď už jen kontakt pro zaslání výsledků:" (`.ecalc-contact-divider`) mezi byznysovými poli a kontaktem – zdůvodňuje, proč kontakt potřebujeme, a dává pocit blízkosti dokončení.
+
+**Beze změny zůstalo:** Moment uložení leadu (až po odeslání celého formuláře včetně kontaktu), výpočet a zobrazení výsledku (až po odeslání) – jde čistě o přeuspořádání polí, ne o změnu flow ukládání/výpočtu. Rozhodnuto s uživatelem: jednodušší a bezpečnější varianta oproti dřívějšímu nápadu ukazovat orientační číslo ještě před kontaktem.
+
+**Musela se upravit i analytika:** `ABANDON_STEPS` pole a `fieldSteps` v `initStepTracking()` (frontend.js) měly pevné pořadí `['name','email','shop_url','segment','database','revenue','consumable','pno','consent']` – použité i pro progress bar (`furthestStep / totalSteps`). Přeuspořádáno na `['segment','consumable','database','revenue','pno','shop_url','name','email','consent']`, aby odpovídalo novému vizuálnímu pořadí – jinak by uživatel vyplňující formulář v novém pořadí dostal nesmyslné/skákající hodnoty progress baru (protože `reachStep()` porovnává jen index v poli, ne skutečné pořadí na stránce). Názvy kroků (stringy) zůstaly stejné, mění se jen pořadí v poli – nemá to dopad na PHP stranu (`ecalc_abandonment_steps` je počítadlo klíčované stejnými stringy bez ohledu na pořadí).
+
+**Ověřeno:** živě na `/kalkulacka/` po vyčištění cache – pole se renderují ve správném pořadí, PHP/JS syntax OK.
+
+---
+
 ### 2026-07-06 – Copywriter/SEO/UX review: konverzní vylepšení formuláře i výsledků
 
 **Soubory:** `includes/class-ecalc-settings.php`, `includes/class-ecalc-plugin.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-shortcode.php`, `templates/frontend-form.php`, `templates/admin/page-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`

@@ -33,24 +33,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</div>
 
 					<div class="ecalc-field">
-						<label class="ecalc-label" for="ecalc-name">Jméno a příjmení <span class="ecalc-required">*</span></label>
-						<input class="ecalc-input" type="text" id="ecalc-name" name="name" placeholder="Jan Novák" required>
-						<span class="ecalc-error-msg" id="ecalc-error-name"></span>
-					</div>
-
-					<div class="ecalc-field">
-						<label class="ecalc-label" for="ecalc-email">E-mail <span class="ecalc-required">*</span></label>
-						<input class="ecalc-input" type="email" id="ecalc-email" name="email" placeholder="jan@mujshop.cz" required>
-						<span class="ecalc-error-msg" id="ecalc-error-email"></span>
-					</div>
-
-					<div class="ecalc-field">
-						<label class="ecalc-label" for="ecalc-shop-url">URL e-shopu <span class="ecalc-required">*</span></label>
-						<input class="ecalc-input" type="text" id="ecalc-shop-url" name="shop_url" placeholder="mujshop.cz" required>
-						<span class="ecalc-error-msg" id="ecalc-error-shop-url"></span>
-					</div>
-
-					<div class="ecalc-field">
 						<label class="ecalc-label" for="ecalc-segment">Oblast podnikání <span class="ecalc-required">*</span></label>
 						<select class="ecalc-input ecalc-select" id="ecalc-segment" name="segment" required>
 							<option value="">— Vyberte oblast —</option>
@@ -134,6 +116,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 							placeholder="např. 10" min="1" max="100" step="1" required>
 						<p class="ecalc-hint">Např. 10 % = cena za emailing má tvořit max. 10 % z tržeb, které emailing vygeneruje.</p>
 						<span class="ecalc-error-msg" id="ecalc-error-pno"></span>
+					</div>
+
+					<p class="ecalc-contact-divider">Skvělé, teď už jen kontakt pro zaslání výsledků:</p>
+
+					<div class="ecalc-field">
+						<label class="ecalc-label" for="ecalc-shop-url">URL e-shopu <span class="ecalc-required">*</span></label>
+						<input class="ecalc-input" type="text" id="ecalc-shop-url" name="shop_url" placeholder="mujshop.cz" required>
+						<span class="ecalc-error-msg" id="ecalc-error-shop-url"></span>
+					</div>
+
+					<div class="ecalc-field">
+						<label class="ecalc-label" for="ecalc-name">Jméno a příjmení <span class="ecalc-required">*</span></label>
+						<input class="ecalc-input" type="text" id="ecalc-name" name="name" placeholder="Jan Novák" required>
+						<span class="ecalc-error-msg" id="ecalc-error-name"></span>
+					</div>
+
+					<div class="ecalc-field">
+						<label class="ecalc-label" for="ecalc-email">E-mail <span class="ecalc-required">*</span></label>
+						<input class="ecalc-input" type="email" id="ecalc-email" name="email" placeholder="jan@mujshop.cz" required>
+						<span class="ecalc-error-msg" id="ecalc-error-email"></span>
 					</div>
 
 					<div class="ecalc-field ecalc-field--checkbox">
