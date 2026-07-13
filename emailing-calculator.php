@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Emailing Calculator
  * Description: Akviziční kalkulačka potenciálu emailingu pro e-shopy. Shortcode: [emailing_calculator]
- * Version: 1.5.9
+ * Version: 1.6.0
  * Author: Lukáš Holubík
  * Text Domain: emailing-calculator
  * Requires at least: 6.0
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ECALC_VERSION', '1.5.9' );
+define( 'ECALC_VERSION', '1.6.0' );
 define( 'ECALC_PLUGIN_FILE', __FILE__ );
 define( 'ECALC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ECALC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

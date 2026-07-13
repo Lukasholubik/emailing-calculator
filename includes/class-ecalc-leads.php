@@ -60,6 +60,7 @@ class ECAlc_Leads {
 			'name'                         => sanitize_text_field( $data['name'] ),
 			'email'                        => sanitize_email( $data['email'] ),
 			'shop_url'                     => esc_url_raw( $data['shop_url'] ),
+			'phone'                        => ecalc_sanitize_phone( $data['phone'] ?? '' ),
 			'segment'                      => sanitize_text_field( $data['segment'] ),
 			'consumable_percentage'        => (int) $data['consumable_percentage'],
 			'database_range'               => sanitize_text_field( $data['database_range'] ),
@@ -92,7 +93,7 @@ class ECAlc_Leads {
 		];
 
 		$formats = [
-			'%s', '%s', '%s', '%s', '%s', '%d', '%s', '%f', '%d',
+			'%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%f', '%d',
 			'%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f',
 			'%s', '%f', '%f', '%s', '%d', '%d', '%s', '%s', '%s', '%s',
 			'%s', '%s', '%s', '%s', '%d',
@@ -355,10 +356,8 @@ class ECAlc_Leads {
 
 	public function save_phone( int $id, string $phone ): void {
 		global $wpdb;
-		$phone = substr( preg_replace( '/[^+\d\s\-()\.]/', '', sanitize_text_field( $phone ) ), 0, 30 );
-		// Musí obsahovat 7–15 číslic, jinak nejde o platné telefonní číslo
-		$digit_count = strlen( preg_replace( '/\D/', '', $phone ) );
-		if ( $digit_count < 7 || $digit_count > 15 ) {
+		$phone = ecalc_sanitize_phone( $phone );
+		if ( ! ecalc_is_valid_phone( $phone ) ) {
 			return;
 		}
 		$wpdb->update(
@@ -440,6 +439,7 @@ class ECAlc_Leads {
 			[
 				'name'                         => sanitize_text_field( $data['name'] ),
 				'shop_url'                     => esc_url_raw( $data['shop_url'] ),
+				'phone'                        => ecalc_sanitize_phone( $data['phone'] ?? '' ),
 				'segment'                      => sanitize_text_field( $data['segment'] ),
 				'consumable_percentage'        => (int) $data['consumable_percentage'],
 				'database_range'               => sanitize_text_field( $data['database_range'] ),
@@ -466,7 +466,7 @@ class ECAlc_Leads {
 			],
 			[ 'id' => $id ],
 			[
-				'%s', '%s', '%s', '%d', '%s', '%f', '%d',
+				'%s', '%s', '%s', '%s', '%d', '%s', '%f', '%d',
 				'%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f',
 				'%s', '%f', '%f', '%s', '%d', '%d', '%s', '%s',
 				'%s',

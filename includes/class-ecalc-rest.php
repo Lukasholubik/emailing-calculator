@@ -175,6 +175,7 @@ class ECAlc_REST {
 		$lead_data = array_merge( [
 			'name'              => sanitize_text_field( $params['name'] ),
 			'email'             => sanitize_email( $params['email'] ),
+			'phone'             => ecalc_sanitize_phone( (string) $params['phone'] ),
 			'shop_url'          => esc_url_raw( $params['shop_url'] ),
 			'segment'           => $input['segment'],
 			'consumable_percentage' => (int) $input['consumable_percentage'],
@@ -213,6 +214,13 @@ class ECAlc_REST {
 			if ( $old_url !== $new_url ) {
 				$this->leads->log_change( $lead_id, 'url_changed',
 					sprintf( '"%s" → "%s"', $old_url, $new_url ) );
+			}
+
+			$old_phone = trim( (string) ( $existing_lead['phone'] ?? '' ) );
+			$new_phone = trim( $lead_data['phone'] );
+			if ( $old_phone !== $new_phone ) {
+				$this->leads->log_change( $lead_id, 'phone_changed',
+					sprintf( '"%s" → "%s"', $old_phone, $new_phone ) );
 			}
 
 			$this->leads->update_lead( $lead_id, $lead_data );
@@ -257,6 +265,7 @@ class ECAlc_REST {
 			'lead'       => [
 				'name'                  => esc_html( $lead_data['name'] ),
 				'email'                 => esc_html( $lead_data['email'] ),
+				'phone'                 => esc_html( $lead_data['phone'] ),
 				'shop_url'              => esc_html( $lead_data['shop_url'] ),
 				'segment'               => esc_html( $input['segment'] ),
 				'consumable_percentage' => (int) $input['consumable_percentage'],
@@ -457,7 +466,7 @@ class ECAlc_REST {
 		}
 		set_transient( $ip_key, $hits + 1, 3600 );
 
-		$valid_steps = [ 'initial', 'name', 'email', 'shop_url', 'segment', 'database', 'revenue', 'consumable', 'pno', 'consent' ];
+		$valid_steps = [ 'initial', 'name', 'email', 'phone', 'shop_url', 'segment', 'database', 'revenue', 'consumable', 'pno', 'consent' ];
 		$params       = $request->get_json_params() ?: [];
 		$last_step    = sanitize_key( $params['last_step']        ?? '' );
 		$time_spent   = max( 0, min( 7200, (int) ( $params['time_spent_s']    ?? 0 ) ) );
@@ -548,6 +557,9 @@ class ECAlc_REST {
 		}
 		if ( empty( $params['email'] ) || ! is_email( $params['email'] ) ) {
 			return new WP_Error( 'invalid_email', 'Zadejte platný e-mail.' );
+		}
+		if ( empty( $params['phone'] ) || ! ecalc_is_valid_phone( ecalc_sanitize_phone( (string) $params['phone'] ) ) ) {
+			return new WP_Error( 'invalid_phone', 'Zadejte platné telefonní číslo (7–15 číslic).' );
 		}
 		if ( empty( $params['shop_url'] ) || ! $this->is_valid_shop_url( (string) $params['shop_url'] ) ) {
 			return new WP_Error( 'invalid_url', 'Zadejte platnou adresu e-shopu (např. mujshop.cz).' );

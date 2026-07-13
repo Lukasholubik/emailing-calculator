@@ -13,7 +13,7 @@
 	var formConverted   = false;
 	var exitBeaconFired = false;
 	var maxScrollPct    = 0;
-	var ABANDON_STEPS   = ['initial', 'segment', 'consumable', 'database', 'revenue', 'pno', 'shop_url', 'name', 'email', 'consent'];
+	var ABANDON_STEPS   = ['initial', 'segment', 'consumable', 'database', 'revenue', 'pno', 'shop_url', 'name', 'email', 'phone', 'consent'];
 
 	// -------------------------------------------------------------------------
 	// GTM dataLayer helper
@@ -95,6 +95,7 @@
 			['ecalc-shop-url',          'focus',  'shop_url'],
 			['ecalc-name',              'focus',  'name'],
 			['ecalc-email',             'focus',  'email'],
+			['ecalc-phone',             'focus',  'phone'],
 			['ecalc-consent-data',      'change', 'consent'],
 		];
 		fieldSteps.forEach(function (triple) {
@@ -467,6 +468,7 @@
 
 		var name  = val('ecalc-name');
 		var email = val('ecalc-email');
+		var phone = val('ecalc-phone');
 		var url   = val('ecalc-shop-url');
 		var seg   = val('ecalc-segment');
 		var db    = val('ecalc-database-range');
@@ -477,6 +479,7 @@
 
 		if (!name) { setError('ecalc-error-name', strings.required); ok = false; }
 		if (!email || !isEmail(email)) { setError('ecalc-error-email', strings.invalid_email || 'Zadejte platný e-mail.'); ok = false; }
+		if (!isValidPhone(phone)) { setError('ecalc-error-phone', 'Zadejte platné telefonní číslo (7–15 číslic).'); ok = false; }
 		if (!url || !isValidShopUrl(url)) { setError('ecalc-error-shop-url', 'Zadejte platnou adresu e-shopu (např. mujshop.cz).'); ok = false; }
 		if (!seg)   { setError('ecalc-error-segment', 'Vyberte segment e-shopu.'); ok = false; }
 		if (!db)    { setError('ecalc-error-database', 'Vyberte velikost databáze.'); ok = false; }
@@ -530,6 +533,7 @@
 		return {
 			name:                 val('ecalc-name'),
 			email:                val('ecalc-email'),
+			phone:                val('ecalc-phone'),
 			shop_url:             val('ecalc-shop-url'),
 			segment:              val('ecalc-segment'),
 			consumable_percentage:parseInt(document.getElementById('ecalc-consumable-percentage').value, 10),
@@ -637,20 +641,16 @@
 					ecalc_lead_id:     currentLeadId,
 				});
 
-				// 1. Telefon dialog – získáme číslo před odesláním notifikace
-				showPhoneDialog(function (phone) {
-					// 2. CTA tracking + notifikace (s telefonem v payloadu)
-					if (cfg.ctaClickUrl && currentLeadId) {
-						fetch(cfg.ctaClickUrl, {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
-							body: JSON.stringify({ lead_id: currentLeadId, lead_token: currentLeadToken, type: 'package', package_name: pkgName, phone: phone }),
-							keepalive: true,
-						});
-					}
-					// 3. Děkovačka
-					showInquiryThankYou(pkgName, ctaUrl);
-				});
+				// Telefon už máme z hlavního formuláře (povinné pole) – rovnou CTA tracking + notifikace
+				if (cfg.ctaClickUrl && currentLeadId) {
+					fetch(cfg.ctaClickUrl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
+						body: JSON.stringify({ lead_id: currentLeadId, lead_token: currentLeadToken, type: 'package', package_name: pkgName, phone: '' }),
+						keepalive: true,
+					});
+				}
+				showInquiryThankYou(pkgName, ctaUrl);
 			});
 		});
 	}
@@ -702,6 +702,7 @@
 		var set = function (id, val) { var el = document.getElementById(id); if (el) el.value = val; };
 		set('ecalc-name',            data.name || '');
 		set('ecalc-email',           data.email || '');
+		set('ecalc-phone',           data.phone || '');
 		set('ecalc-shop-url',        data.shop_url || '');
 		set('ecalc-segment',         data.segment || '');
 		set('ecalc-database-range',  data.database_range || '');
@@ -1017,6 +1018,12 @@
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 	}
 
+	function isValidPhone(val) {
+		if (!val) return false;
+		var digits = val.replace(/\D/g, '');
+		return /^\d{7,15}$/.test(digits);
+	}
+
 	function isValidShopUrl(str) {
 		// Povolí: mujshop.cz, shop.co.uk, https://eshop.online/cesta
 		// Vyžaduje TLD min. 2 písmena, bez horního limitu (.cz, .com, .online, .consulting...)
@@ -1071,103 +1078,6 @@
 		}
 	}
 
-
-	// -------------------------------------------------------------------------
-	// Phone dialog – volitelné zadání telefonního čísla po CTA kliknutí
-	// -------------------------------------------------------------------------
-	function showPhoneDialog(callback) {
-		var s = cfg.strings || {};
-		var overlay = document.createElement('div');
-		overlay.className = 'ecalc-bm-overlay ecalc-phone-overlay';
-		overlay.innerHTML =
-			'<div class="ecalc-phone-box">' +
-				'<div class="ecalc-ty-icon">&#128222;</div>' +
-				'<h3 class="ecalc-phone-title">' + esc(s.phone_dialog_title  || 'Zanechte nám telefonní číslo') + '</h3>' +
-				'<p class="ecalc-phone-desc">'  + esc(s.phone_dialog_desc   || 'Pro rychlejší komunikaci nám můžete zanechat telefonní číslo.') + '</p>' +
-				'<input class="ecalc-input ecalc-phone-input" type="tel" placeholder="např. +420 777 123 456" autocomplete="tel">' +
-				'<span class="ecalc-phone-error ecalc-error-msg"></span>' +
-				'<div class="ecalc-phone-btns">' +
-					'<button class="ecalc-phone-submit"><span>' + esc(s.phone_dialog_submit || 'Pokračovat') + '</span></button>' +
-					'<button class="ecalc-phone-skip"><span>'   + esc(s.phone_dialog_skip   || 'Přeskočit')  + '</span></button>' +
-				'</div>' +
-			'</div>';
-
-		document.body.appendChild(overlay);
-		document.body.style.overflow = 'hidden';
-		overlay.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
-
-		var phoneInput = overlay.querySelector('.ecalc-phone-input');
-		var phoneError = overlay.querySelector('.ecalc-phone-error');
-		var phoneOpenedAt = Date.now();
-
-		function isValidPhone(val) {
-			if (!val) return true;
-			var digits = val.replace(/[\s\-().+]/g, '');
-			return /^\d{7,15}$/.test(digits);
-		}
-
-		function closePhone(phone) {
-			overlay.remove();
-			document.body.style.overflow = '';
-			document.removeEventListener('keydown', onEscPhone);
-			callback(phone || '');
-		}
-
-		function onEscPhone(e) { if (e.key === 'Escape') closePhone(''); }
-
-		phoneInput.addEventListener('input', function () {
-			if (phoneError) phoneError.textContent = '';
-			phoneInput.classList.remove('ecalc-input--error');
-		});
-
-		overlay.querySelector('.ecalc-phone-submit').addEventListener('click', function () {
-			var phone = phoneInput ? phoneInput.value.trim() : '';
-			if (!isValidPhone(phone)) {
-				if (phoneError) phoneError.textContent = s.phone_dialog_error || 'Zadejte platné telefonní číslo (7–15 číslic).';
-				phoneInput.classList.add('ecalc-input--error');
-				phoneInput.focus();
-				return;
-			}
-			closePhone(phone);
-		});
-
-		overlay.querySelector('.ecalc-phone-skip').addEventListener('click', function () {
-			closePhone('');
-		});
-
-		overlay.addEventListener('click', function (e) {
-			if (Date.now() - phoneOpenedAt < 350) return;
-			if (e.target === overlay) closePhone('');
-		});
-
-		document.addEventListener('keydown', onEscPhone);
-
-		if (phoneInput) {
-			phoneInput.focus();
-			phoneInput.addEventListener('keydown', function (e) {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					var phone = phoneInput.value.trim();
-					if (!isValidPhone(phone)) {
-						if (phoneError) phoneError.textContent = s.phone_dialog_error || 'Zadejte platné telefonní číslo (7–15 číslic).';
-						phoneInput.classList.add('ecalc-input--error');
-						return;
-					}
-					closePhone(phone);
-				}
-			});
-		}
-	}
-
-	function savePhone(phone) {
-		if (!cfg.savePhoneUrl || !currentLeadId || !phone) return;
-		fetch(cfg.savePhoneUrl, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
-			body: JSON.stringify({ lead_id: currentLeadId, lead_token: currentLeadToken, phone: phone }),
-			keepalive: true,
-		});
-	}
 
 	// -------------------------------------------------------------------------
 	// Inquiry thank-you popup (Poptat balíček)

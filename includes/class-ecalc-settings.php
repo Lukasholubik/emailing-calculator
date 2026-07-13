@@ -35,12 +35,6 @@ class ECAlc_Settings {
 			'duplicate_cancel'   => 'Zrušit',
 			// Banner o aktualizaci záznamu
 			'update_banner'      => 'Váš záznam byl aktualizován na základě nového výpočtu.',
-			// Dialog – telefonní číslo
-			'phone_dialog_title'  => 'Zanechte nám telefonní číslo',
-			'phone_dialog_desc'   => 'Pro rychlejší komunikaci nám můžete zanechat telefonní číslo.',
-			'phone_dialog_submit' => 'Pokračovat',
-			'phone_dialog_skip'   => 'Přeskočit',
-			'phone_dialog_error'  => 'Zadejte platné telefonní číslo (7–15 číslic).',
 			// Mikrocopy pod tlačítkem formuláře
 			'form_submit_note'     => 'Zdarma · Bez závazků · Výsledek za pár vteřin',
 			// Doplňkový text u CTA "Konzultace zdarma"
