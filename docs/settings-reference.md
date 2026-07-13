@@ -341,7 +341,7 @@ Tyto options se automaticky aktualizují při každém zobrazení/odeslání:
 | `followup_sent` | TINYINT | 1 = follow-up odeslán |
 | `booking_status` | VARCHAR 50 | Stav rezervace kalendáře |
 | `lead_status` | VARCHAR 50 | Nový / Aktivní / Neaktivní / Uzavřený |
-| `phone` | VARCHAR 20 | Telefonní číslo (volitelné) |
+| `phone` | VARCHAR 30 | Telefonní číslo – **povinné** od formuláře (v.1.6.0), staré leady mohou mít NULL |
 | `time_to_submit` | INT | Sekund od načtení do odeslání |
 | `utm_source` | VARCHAR 255 | UTM parametry |
 | `utm_medium` | VARCHAR 255 | |
@@ -383,4 +383,4 @@ Tyto options se automaticky aktualizují při každém zobrazení/odeslání:
 
 ---
 
-*Poslední aktualizace: 2026-06-08*
+*Poslední aktualizace: 2026-07-13*

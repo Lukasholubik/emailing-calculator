@@ -8,7 +8,7 @@
 
 | Položka | Hodnota |
 |---|---|
-| Verze | 1.4.0 |
+| Verze | 1.6.0 |
 | Prefix option klíčů | `ecalc_` |
 | Prefix tříd | `ECAlc_` |
 | DB tabulky | `{prefix}emailing_calculator_leads`, `{prefix}emailing_calculator_log` |
@@ -98,7 +98,7 @@ emailing-calculator/
 | `/check-email` | GET | Public | Kontrola duplicitního e-mailu |
 | `/booking-status` | POST | Nonce + Token | Aktualizace stavu rezervace kalendáře |
 | `/cta-click` | POST | Nonce + Token | Zaznamenání kliknutí na CTA |
-| `/save-phone` | POST | Nonce + Token | Uložení telefonního čísla |
+| `/save-phone` | POST | Nonce + Token | Uložení telefonního čísla (legacy – od v.1.6.0 se telefon sbírá rovnou v `/calculate`, frontend endpoint už nevolá) |
 | `/resend/{id}` | POST | manage_options | Ruční resync do SmartEmailing |
 | `/track-view` | POST | Public | Analytika – zobrazení stránky |
 | `/track-exit` | POST | Public | Analytika – opuštění formuláře |
@@ -154,6 +154,7 @@ Výchozí váhy (70/20/10) lze měnit v admin → Nastavení výpočtů → Výp
 |---|---|---|
 | name | text | povinné, max 255 znaků |
 | email | email | povinné, UNIQUE v DB |
+| phone | tel | povinné, 7–15 číslic |
 | shop_url | url | povinné, validovaná doména |
 | segment | select | 34 kategorií e-shopů |
 | consumable_percentage | 0–100 % | slider + textový input |
@@ -224,4 +225,4 @@ Každá změna statusu se loguje do `emailing_calculator_log`.
 
 ---
 
-*Tento soubor popisuje stav pluginu ke dni **2026-06-08**. Aktuální změny viz `dev-log.md`.*
+*Tento soubor popisuje stav pluginu ke dni **2026-07-13**. Aktuální změny viz `dev-log.md`.*

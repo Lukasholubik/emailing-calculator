@@ -200,36 +200,6 @@
 			</div>
 
 			<div class="ecalc-settings-section">
-				<h2>Dialog – telefonní číslo</h2>
-				<p class="description">Texty zobrazené v dialogu po kliknutí na CTA, kde zákazník může (volitelně) zadat telefonní číslo.</p>
-				<table class="form-table">
-					<tr>
-						<th><label for="phone_dialog_title">Nadpis dialogu</label></th>
-						<td><input type="text" id="phone_dialog_title" name="phone_dialog_title" value="<?php echo esc_attr( $cfg['phone_dialog_title'] ?? 'Zanechte nám telefonní číslo' ); ?>" class="regular-text"></td>
-					</tr>
-					<tr>
-						<th><label for="phone_dialog_desc">Popis / doprovodný text</label></th>
-						<td><input type="text" id="phone_dialog_desc" name="phone_dialog_desc" value="<?php echo esc_attr( $cfg['phone_dialog_desc'] ?? 'Pro rychlejší komunikaci nám můžete zanechat telefonní číslo.' ); ?>" class="large-text"></td>
-					</tr>
-					<tr>
-						<th><label for="phone_dialog_submit">Text tlačítka „Pokračovat"</label></th>
-						<td><input type="text" id="phone_dialog_submit" name="phone_dialog_submit" value="<?php echo esc_attr( $cfg['phone_dialog_submit'] ?? 'Pokračovat' ); ?>" class="regular-text"></td>
-					</tr>
-					<tr>
-						<th><label for="phone_dialog_skip">Text tlačítka „Přeskočit"</label></th>
-						<td><input type="text" id="phone_dialog_skip" name="phone_dialog_skip" value="<?php echo esc_attr( $cfg['phone_dialog_skip'] ?? 'Přeskočit' ); ?>" class="regular-text"></td>
-					</tr>
-					<tr>
-						<th><label for="phone_dialog_error">Chybová hláška (neplatný formát)</label></th>
-						<td>
-							<input type="text" id="phone_dialog_error" name="phone_dialog_error" value="<?php echo esc_attr( $cfg['phone_dialog_error'] ?? 'Zadejte platné telefonní číslo (7–15 číslic).' ); ?>" class="large-text">
-							<p class="description">Zobrazí se, pokud zadané číslo nesplňuje formát (7–15 číslic).</p>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-			<div class="ecalc-settings-section">
 				<h2>Ochrana proti spamu</h2>
 				<table class="form-table">
 					<tr>

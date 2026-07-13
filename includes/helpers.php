@@ -52,6 +52,15 @@ function ecalc_replace_variables( string $text, array $data ): string {
 	return str_replace( array_keys( $map ), array_values( $map ), $text );
 }
 
+function ecalc_sanitize_phone( string $phone ): string {
+	return substr( preg_replace( '/[^+\d\s\-()\.]/', '', sanitize_text_field( $phone ) ), 0, 30 );
+}
+
+function ecalc_is_valid_phone( string $phone ): bool {
+	$digit_count = strlen( preg_replace( '/\D/', '', $phone ) );
+	return $digit_count >= 7 && $digit_count <= 15;
+}
+
 function ecalc_sanitize_css_value( string $value ): string {
 	// Odstraní znaky umožňující vyskočení z CSS property value kontextu.
 	$value = trim( $value );

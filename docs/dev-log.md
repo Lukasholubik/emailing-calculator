@@ -76,6 +76,34 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-07-13 – Telefon jako povinné pole v hlavním formuláři (verze 1.6.0)
+
+**Soubory:** `emailing-calculator.php`, `CHANGELOG.md`, `includes/helpers.php`, `includes/class-ecalc-leads.php`, `includes/class-ecalc-rest.php`, `includes/class-ecalc-settings.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-plugin.php`, `templates/frontend-form.php`, `templates/admin/page-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`, `docs/settings-reference.md`, `docs/overview.md`
+
+**Zadání od uživatele:** Telefon se dosud sbíral jen volitelně a až po kliknutí na CTA (poptat balíček/konzultace) přes samostatný dialog – lead bez telefonu ale nedává smysl, proto ho uživatel chtěl přesunout do hlavního formuláře jako povinné pole, hned za E-mail (podle screenshotu – mezi E-mail a souhlasy).
+
+**Co bylo uděláno:**
+1. Nové pole „Telefon" (`templates/frontend-form.php`) mezi E-mailem a checkboxy souhlasů, `type="tel"`, `required`.
+2. Sdílené helpery `ecalc_sanitize_phone()` / `ecalc_is_valid_phone()` (`includes/helpers.php`) – stejná logika (7–15 číslic), použitá jak v `ECAlc_Leads::save_phone()`, tak nově v REST validaci a při ukládání leadu.
+3. REST `/calculate` (`class-ecalc-rest.php`): telefon je nyní povinný ve `validate()`, ukládá se do `lead_data['phone']`, loguje se změna telefonu při přepočtu existujícího leadu (stejně jako `name_changed`/`url_changed`), vrací se i v odpovědi `lead.phone`.
+4. `ECAlc_Leads::insert()`/`update_lead()` – přidán sloupec `phone` (v DB již existoval jako `varchar(30) DEFAULT NULL`, žádná migrace nebyla potřeba).
+5. Frontend JS (`frontend.js`): telefon zařazen do `ABANDON_STEPS`/`fieldSteps` (mezi email a consent), validace přes novou modulovou funkci `isValidPhone()` (přesunuta z bývalého dialogu), `collectData()`/`prefillForm()` doplněny o `phone`.
+
+**Rozhodnutí s uživatelem (dotaz přes AskUserQuestion):** Dialog „Zanechte nám telefonní číslo" po kliknutí na CTA „Poptat balíček" (`showPhoneDialog()`) byl **odstraněn úplně** – uživatel zvolil tuto variantu místo ponechání/předvyplnění, protože telefon je od teď vždy znám už z hlavního formuláře a dialog by byl čistě duplicitní tření navíc.
+
+**Uklizeno jako důsledek odstranění dialogu:**
+- JS: `showPhoneDialog()` i `savePhone()` (ta byla už beztak nevolaná – mrtvý kód) smazány; handler „Poptat balíček" volá CTA tracking rovnou.
+- Nastavení `phone_dialog_*` (nadpis/popis/tlačítka/chybová hláška) odstraněna z `ecalc_settings` defaultů, uloženého formuláře (`class-ecalc-admin.php`) i z lokalizovaných stringů (`class-ecalc-plugin.php`).
+- Admin sekce „Dialog – telefonní číslo" smazána z `templates/admin/page-form.php`.
+- Mrtvé CSS (`.ecalc-phone-box/-title/-desc/-input/-btns/-submit/-skip`) smazáno z `frontend.css`.
+- REST endpoint `/save-phone` (`handle_save_phone`) a `cta-click`'s volitelný `phone` parametr **ponechány beze změny** – nejsou už z frontendu volané, ale nejde o rizikový/matoucí kód a odstranění by bylo nad rámec zadání (mohou se hodit pro budoucí ruční doplnění telefonu v adminu).
+
+**Pozor na:** `phone` sloupec v DB je `varchar(30)` (dokumentace v `settings-reference.md` dřív chybně uváděla 20 – opraveno). Staré leady bez telefonu (před touto změnou) mají `phone = NULL` a nejsou nijak dodatečně vynucovány.
+
+**Ověřeno:** PHP lint (`php -l`) na všech upravených souborech, `node --check` na `frontend.js`, průchod formulářem na `/kalkulacka/` (validace chybí-li telefon, uložení do DB, SmartEmailing sync s telefonem hned při prvním importu).
+
+---
+
 ### 2026-07-06 – Formulář: přesun kontaktních polí (URL, jméno, e-mail) na konec
 
 **Soubory:** `templates/frontend-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`

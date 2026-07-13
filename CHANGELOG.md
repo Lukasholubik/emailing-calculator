@@ -3,6 +3,18 @@
 VĹˇechny vĂ˝raznĂ© zmÄ›ny jsou dokumentovĂˇny v tomto souboru.
 FormĂˇt dle [Keep a Changelog](https://keepachangelog.com/cs/1.0.0/).
 
+## [1.6.0] – 2026-07-13
+
+### Přidáno
+- Pole **Telefon** v hlavním formuláři kalkulačky (mezi E-mailem a souhlasy) – povinné, validace 7–15 číslic na frontendu i backendu.
+
+### Změněno
+- Telefon se nyní ukládá k leadu hned při prvním odeslání formuláře (dřív jen volitelně přes dialog po kliknutí na CTA).
+- Odstraněn dialog „Zanechte nám telefonní číslo" zobrazovaný po kliknutí na CTA „Poptat balíček" – telefon už je v tu chvíli vždy znám z formuláře.
+
+### Odstraněno
+- Nastavení textů dialogu pro telefon (`phone_dialog_*`) v admin → Formulář & CTA – dialog byl odstraněn.
+
 ## [1.5.9] – 2026-07-06
 
 ### Změněno

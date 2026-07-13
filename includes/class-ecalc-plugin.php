@@ -166,7 +166,6 @@ class ECAlc_Plugin {
 			'checkEmailUrl'    => esc_url( rest_url( 'emailing-calculator/v1/check-email' ) ),
 			'ctaClickUrl'      => esc_url( rest_url( 'emailing-calculator/v1/cta-click' ) ),
 			'bookingStatusUrl' => esc_url( rest_url( 'emailing-calculator/v1/booking-status' ) ),
-			'savePhoneUrl'     => esc_url( rest_url( 'emailing-calculator/v1/save-phone' ) ),
 			'bookingUrl'       => esc_url( $cfg['booking_url'] ?? '' ),
 			'bookingTexts'     => [
 				'title'            => esc_html( $cfg['booking_modal_title']      ?? 'Vyberte termín konzultace' ),
@@ -188,12 +187,6 @@ class ECAlc_Plugin {
 				'loading'              => 'Počítám výsledky...',
 				'error_generic'        => 'Došlo k chybě. Zkuste to prosím znovu.',
 				'consent_required'     => 'Pro pokračování je nutné souhlasit se zpracováním údajů.',
-				// Dialog – telefonní číslo
-				'phone_dialog_title'   => esc_html( $cfg['phone_dialog_title']  ?? 'Zanechte nám telefonní číslo' ),
-				'phone_dialog_desc'    => esc_html( $cfg['phone_dialog_desc']   ?? 'Pro rychlejší komunikaci nám můžete zanechat telefonní číslo.' ),
-				'phone_dialog_submit'  => esc_html( $cfg['phone_dialog_submit'] ?? 'Pokračovat' ),
-				'phone_dialog_skip'    => esc_html( $cfg['phone_dialog_skip']   ?? 'Přeskočit' ),
-				'phone_dialog_error'   => esc_html( $cfg['phone_dialog_error']  ?? 'Zadejte platné telefonní číslo (7–15 číslic).' ),
 				'inquiry_title'        => esc_html( $cfg['inquiry_title']     ?? 'Děkujeme za zájem!' ),
 				'inquiry_pkg_label'    => esc_html( $cfg['inquiry_pkg_label'] ?? 'Poptáváte balíček:' ),
 				'inquiry_msg'          => esc_html( $cfg['inquiry_msg']       ?? 'Vaše poptávka byla odeslána. Ozveme se vám do 24 hodin a probereme detaily spolupráce.' ),

@@ -138,6 +138,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<span class="ecalc-error-msg" id="ecalc-error-email"></span>
 					</div>
 
+					<div class="ecalc-field">
+						<label class="ecalc-label" for="ecalc-phone">Telefon <span class="ecalc-required">*</span></label>
+						<input class="ecalc-input" type="tel" id="ecalc-phone" name="phone" placeholder="+420 777 123 456" autocomplete="tel" required>
+						<span class="ecalc-error-msg" id="ecalc-error-phone"></span>
+					</div>
+
 					<div class="ecalc-field ecalc-field--checkbox">
 						<label class="ecalc-checkbox-label">
 							<input type="checkbox" id="ecalc-consent-data" name="consent_data" value="1" required>
