@@ -1177,9 +1177,24 @@
 .ecalc-verdict--borderline .ecalc-verdict-value { color: var(--ecalc-orange); }
 .ecalc-verdict--low .ecalc-verdict-value        { color: var(--ecalc-red); }
 
+.ecalc-wrapper .ecalc-verdict-cta {
+	margin: 16px 0 0 6px;
+	padding: 10px 26px;
+	font-size: 0.92rem;
+}
+
+@media (max-width: 520px) {
+	.ecalc-wrapper .ecalc-verdict-cta {
+		display: block;
+		margin-left: 6px;
+		margin-right: 6px;
+		text-align: center;
+	}
+}
+
 /* Rezervace konzultace – jediná konverze výsledku */
 .ecalc-booking-cta {
-	background: var(--ecalc-dark, #352830);
+	background: var(--ecalc-cta-bg, #3D4644);
 	color: var(--ecalc-dark-text, #ffffff);
 	border-radius: var(--ecalc-radius, 12px);
 	padding: 32px 36px;

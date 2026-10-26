@@ -604,6 +604,7 @@
 				gtm('ecalc_cta_click', {
 					ecalc_cta_type:   'consultation',
 					ecalc_cta_label:  this.textContent.trim(),
+					ecalc_cta_position: this.getAttribute('data-cta-position') || '',
 					ecalc_lead_id:    currentLeadId,
 				});
 
@@ -738,7 +739,7 @@
 		html += statCard('Potenciál emailingu', fmtPct(calc.final_potential), 'orientační odhad');
 		html += statCard('Odhadovaný obrat z emailingu', fmt(calc.emailing_revenue_mid), fmt(calc.emailing_revenue_low) + ' – ' + fmt(calc.emailing_revenue_high) + ' měsíčně');
 		html += statCard('Budget na emailing', fmt(calc.available_budget), 'měsíčně při vámi zvoleném PNO ' + lead.expected_pno + ' %');
-		html += verdictStatCard(verdict);
+		html += verdictStatCard(verdict, res);
 		html += '</div>';
 
 		// Result text
@@ -773,12 +774,16 @@
 		return html;
 	}
 
-	function verdictStatCard(verdict) {
+	function verdictStatCard(verdict, res) {
 		var level = verdict.level || 'good';
 		return '<div class="ecalc-stat-card ecalc-verdict ecalc-verdict--' + esc(level) + '">'
 			+ '<p class="ecalc-stat-label">' + esc(verdict.label || 'Vyplatí se emailing?') + '</p>'
 			+ '<p class="ecalc-stat-value ecalc-verdict-value">' + esc(verdict.value || '') + '</p>'
 			+ (verdict.sub ? '<p class="ecalc-stat-sub">' + esc(verdict.sub) + '</p>' : '')
+			// Stejná konverze jako dole, hned u čísel
+			+ '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn ecalc-verdict-cta"'
+			+ ' data-gtm-id="ecalc-cta-consultation" data-cta-position="karta"'
+			+ ' rel="noopener"><span>' + esc(res.cta_text || 'Chci konzultaci zdarma') + '</span></a>'
 			+ '</div>';
 	}
 
@@ -791,7 +796,7 @@
 			html += '<p class="ecalc-booking-cta-sub">' + esc(res.cta_subtitle) + '</p>';
 		}
 		html += '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn"'
-			+ ' data-gtm-id="ecalc-cta-consultation"'
+			+ ' data-gtm-id="ecalc-cta-consultation" data-cta-position="dole"'
 			+ ' rel="noopener"><span>' + esc(res.cta_text || 'Chci konzultaci zdarma') + '</span></a>';
 		if (cfg.ctaConsultationNote) {
 			html += '<p class="ecalc-booking-cta-note">' + esc(cfg.ctaConsultationNote) + '</p>';
