@@ -166,6 +166,8 @@ class ECAlc_Plugin {
 			'checkEmailUrl'    => esc_url( rest_url( 'emailing-calculator/v1/check-email' ) ),
 			'ctaClickUrl'      => esc_url( rest_url( 'emailing-calculator/v1/cta-click' ) ),
 			'bookingStatusUrl' => esc_url( rest_url( 'emailing-calculator/v1/booking-status' ) ),
+			'salesUnlockUrl'   => esc_url( rest_url( 'emailing-calculator/v1/sales-unlock' ) ),
+			'salesCalcUrl'     => esc_url( rest_url( 'emailing-calculator/v1/sales-calculate' ) ),
 			'bookingUrl'       => esc_url( $cfg['booking_url'] ?? '' ),
 			'bookingTexts'     => [
 				'title'            => esc_html( $cfg['booking_modal_title']      ?? 'Vyberte termín konzultace' ),

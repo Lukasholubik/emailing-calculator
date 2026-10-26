@@ -38,6 +38,7 @@
 		initRevenueToggle();
 		initRevenueExactFormat();
 		initForm();
+		initSalesMode();
 	});
 
 	function captureUtm() {
@@ -52,6 +53,8 @@
 
 	function trackView() {
 		if (!cfg.trackViewUrl) return;
+		// Obchodník v obchodním režimu se do návštěv nepočítá
+		try { if (sessionStorage.getItem('ecalc_sales_token')) return; } catch (e) {}
 		try {
 			fetch(cfg.trackViewUrl, {
 				method: 'POST',
@@ -111,7 +114,7 @@
 
 		// Exit beacon
 		var fireExit = function () {
-			if (exitBeaconFired || !cfg.trackExitUrl) return;
+			if (exitBeaconFired || !cfg.trackExitUrl || salesToken) return;
 			exitBeaconFired = true;
 			var payload = JSON.stringify({
 				last_step:        ABANDON_STEPS[furthestStep],
@@ -270,9 +273,16 @@
 				return;
 			}
 
-			formConverted = true;
 			var data = collectData();
 			lastFormData = data;
+
+			// Obchodní režim: jiný endpoint, žádné GTM ani analytika
+			if (salesToken) {
+				submitSales(data);
+				return;
+			}
+
+			formConverted = true;
 
 			gtm('ecalc_form_submit', {
 				ecalc_segment:            data.segment,
@@ -353,8 +363,6 @@
 						ecalc_emailing_revenue_mid:       parseFloat(calc.emailing_revenue_mid)  || 0,
 						ecalc_emailing_revenue_high:      parseFloat(calc.emailing_revenue_high) || 0,
 						ecalc_available_budget:           parseFloat(calc.available_budget) || 0,
-						ecalc_recommended_package:        res.recommended_package ? res.recommended_package.name  : '',
-						ecalc_recommended_package_price:  res.recommended_package ? res.recommended_package.price : 0,
 						ecalc_is_updated:                 r.updated || false,
 					});
 					showResult(r);
@@ -477,10 +485,11 @@
 		var consentMkt  = document.getElementById('ecalc-consent-marketing');
 		var mktRequired = consentMkt && consentMkt.hasAttribute('required');
 
-		if (!name) { setError('ecalc-error-name', strings.required); ok = false; }
-		if (!email || !isEmail(email)) { setError('ecalc-error-email', strings.invalid_email || 'Zadejte platný e-mail.'); ok = false; }
-		if (!isValidPhone(phone)) { setError('ecalc-error-phone', 'Zadejte platné telefonní číslo (7–15 číslic).'); ok = false; }
-		if (!url || !isValidShopUrl(url)) { setError('ecalc-error-shop-url', 'Zadejte platnou adresu e-shopu (např. mujshop.cz).'); ok = false; }
+		var needContact = !salesToken;
+		if (needContact && !name) { setError('ecalc-error-name', strings.required); ok = false; }
+		if (needContact && (!email || !isEmail(email))) { setError('ecalc-error-email', strings.invalid_email || 'Zadejte platný e-mail.'); ok = false; }
+		if (needContact && !isValidPhone(phone)) { setError('ecalc-error-phone', 'Zadejte platné telefonní číslo (7–15 číslic).'); ok = false; }
+		if (needContact && (!url || !isValidShopUrl(url))) { setError('ecalc-error-shop-url', 'Zadejte platnou adresu e-shopu (např. mujshop.cz).'); ok = false; }
 		if (!seg)   { setError('ecalc-error-segment', 'Vyberte segment e-shopu.'); ok = false; }
 		if (!db)    { setError('ecalc-error-database', 'Vyberte velikost databáze.'); ok = false; }
 
@@ -499,10 +508,10 @@
 			setError('ecalc-error-pno', 'Zadejte PNO v rozsahu 1–100 %.'); ok = false;
 		}
 
-		if (consentData && !consentData.checked) {
+		if (needContact && consentData && !consentData.checked) {
 			setError('ecalc-error-consent-data', strings.consent_required || 'Souhlas je povinný.'); ok = false;
 		}
-		if (mktRequired && !consentMkt.checked) {
+		if (needContact && mktRequired && !consentMkt.checked) {
 			setError('ecalc-error-consent-marketing', 'Souhlas s marketingem je povinný.'); ok = false;
 		}
 
@@ -579,7 +588,7 @@
 		var res     = response.result;
 		var updated = response.updated || false;
 
-		var html = buildResultHTML(lead, calc, res, updated);
+		var html = buildResultHTML(lead, calc, res, updated, !!response.sales_mode);
 		document.getElementById('ecalc-result-inner').innerHTML = html;
 		resultEl.style.display = '';
 		resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -606,6 +615,7 @@
 				gtm('ecalc_cta_click', {
 					ecalc_cta_type:   'consultation',
 					ecalc_cta_label:  this.textContent.trim(),
+					ecalc_cta_position: this.getAttribute('data-cta-position') || '',
 					ecalc_lead_id:    currentLeadId,
 				});
 
@@ -624,33 +634,6 @@
 				} else if (fallbackUrl && fallbackUrl !== '#' && fallbackUrl !== 'javascript:void(0)') {
 					window.location.href = fallbackUrl;
 				}
-			});
-		});
-
-		// "Poptat balíček" – konkrétní balíček
-		container.querySelectorAll('.ecalc-package-cta').forEach(function (btn) {
-			btn.addEventListener('click', function (e) {
-				e.preventDefault();
-				var card    = this.closest('.ecalc-package-card');
-				var pkgName = card ? ((card.querySelector('.ecalc-package-name') || {}).textContent || '').trim() : '';
-				var ctaUrl  = this.getAttribute('href') || '';
-
-				gtm('ecalc_package_cta_click', {
-					ecalc_cta_type:    'package',
-					ecalc_package_name: pkgName,
-					ecalc_lead_id:     currentLeadId,
-				});
-
-				// Telefon už máme z hlavního formuláře (povinné pole) – rovnou CTA tracking + notifikace
-				if (cfg.ctaClickUrl && currentLeadId) {
-					fetch(cfg.ctaClickUrl, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
-						body: JSON.stringify({ lead_id: currentLeadId, lead_token: currentLeadToken, type: 'package', package_name: pkgName, phone: '' }),
-						keepalive: true,
-					});
-				}
-				showInquiryThankYou(pkgName, ctaUrl);
 			});
 		});
 	}
@@ -727,7 +710,7 @@
 		}
 	}
 
-	function buildResultHTML(lead, calc, res, updated) {
+	function buildResultHTML(lead, calc, res, updated, salesResult) {
 		var html = '<div class="ecalc-result-wrap">';
 
 		// Banner pro aktualizaci existujícího záznamu
@@ -757,28 +740,18 @@
 		html += summaryItem('Očekávané PNO',     lead.expected_pno + ' %');
 		html += '</div></div>';
 
-		// Stats grid
-		var noMeetsPno = (res.type === 'low_potential' || res.type === 'borderline');
-		var textClass  = res.type === 'low_potential' ? ' ecalc-result-text--danger'
-		               : res.type === 'borderline'    ? ' ecalc-result-text--warning'
-		               : '';
+		// Stats grid – pravdivý odhad bez balíčků a cen, cílem je rezervace schůzky
+		var verdict   = res.verdict || {};
+		var textClass = verdict.level === 'low'        ? ' ecalc-result-text--danger'
+		              : verdict.level === 'borderline' ? ' ecalc-result-text--warning'
+		              : '';
 
 		html += '<div class="ecalc-result-grid">';
 		html += statCard('Potenciál emailingu', fmtPct(calc.final_potential), 'orientační odhad');
-		html += statCard('Odhadovaný obrat z emailingu', fmt(calc.emailing_revenue_mid), fmt(calc.emailing_revenue_low) + ' – ' + fmt(calc.emailing_revenue_high));
-		if (!noMeetsPno && res.recommended_package) {
-			var pkgSavings = calc.available_budget - res.recommended_package.price;
-			html += budgetStatCard(calc.available_budget, lead.expected_pno, res.recommended_package.real_pno, pkgSavings);
-			html += packageStatCard(res.recommended_package.name, res.recommended_package.price, res.recommended_package.items || []);
-		} else {
-			var cheapestForBudget = findCheapestPackage(res.packages);
-			if (cheapestForBudget) {
-				html += budgetStatCardAlert(calc.available_budget, lead.expected_pno, cheapestForBudget.real_pno);
-			} else {
-				html += statCard('Doporučený budget', fmt(calc.available_budget), 'při PNO ' + lead.expected_pno + ' %');
-			}
-			html += consultationStatCard(res.cta_text, res.cta_url);
-		}
+		html += statCard('Odhadovaný obrat z emailingu', fmt(calc.emailing_revenue_mid), fmt(calc.emailing_revenue_low) + ' – ' + fmt(calc.emailing_revenue_high) + ' měsíčně');
+		html += statCard('Budget na emailing', fmt(calc.available_budget), 'měsíčně při vámi zvoleném PNO ' + lead.expected_pno + ' %');
+		html += verdictStatCard(verdict);
+		if (!salesResult) html += gridCta(res);
 		html += '</div>';
 
 		// Result text
@@ -803,98 +776,267 @@
 			if (res.arguments.summary) {
 				html += '<p class="ecalc-arguments-summary">' + esc(res.arguments.summary) + '</p>';
 			}
-			if (res.cta_url || res.cta_text) {
-				html += '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-arguments-cta ecalc-cta-btn ecalc-cta-btn--outline"'
-					+ ' data-gtm-id="ecalc-cta-consultation"'
-					+ ' rel="noopener"><span>' + esc(res.cta_text) + '</span></a>';
-			}
 			html += '</div>';
 		}
 
-		// ---- PACKAGES SECTION ----
-		if (res.packages && res.packages.length > 0) {
-			if (noMeetsPno) {
-				// Nesplněné PNO: zobrazit jen nejlevnější balíček + konzultace CTA
-				var cheapest = findCheapestPackage(res.packages);
-				if (cheapest) {
-					html += '<p class="ecalc-packages-title">Nejbližší varianta pro orientaci</p>';
-					html += '<div class="ecalc-packages-grid ecalc-packages-grid--single">';
-					html += buildPackageCard(cheapest, lead.expected_pno, false, null);
-					html += '</div>';
-				}
-				if (res.cta_url || res.cta_text) {
-					html += '<div class="ecalc-cta-wrap">';
-					html += '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn"'
-					+ ' data-gtm-id="ecalc-cta-consultation"'
-					+ ' rel="noopener"><span>' + esc(res.cta_text) + '</span></a>';
-					html += '</div>';
-				}
-			} else {
-				// Splněné PNO: všechny balíčky s "Poptat balíček" u každého
-				html += '<p class="ecalc-packages-title">Porovnání balíčků</p>';
-				html += '<div class="ecalc-packages-grid">';
-				res.packages.forEach(function (pkg) {
-					html += buildPackageCard(pkg, lead.expected_pno, true, res.cta_url || '#');
-				});
-				html += '</div>';
-			}
+		if (salesResult) {
+			// ---- OBCHODNÍ REŽIM: balíčky s cenami a reálným PNO ----
+			html += salesPackagesSection(res, lead.expected_pno);
+		} else {
+			// ---- JEDINÁ KONVERZE: rezervace konzultace ----
+			html += bookingCtaBlock(res);
 		}
 
 		html += '</div>';
 		return html;
 	}
 
-	function findCheapestPackage(packages) {
-		if (!packages || !packages.length) return null;
-		return packages.reduce(function (min, pkg) {
-			return parseFloat(pkg.price) < parseFloat(min.price) ? pkg : min;
+	function verdictStatCard(verdict) {
+		var level = verdict.level || 'good';
+		return '<div class="ecalc-stat-card ecalc-verdict ecalc-verdict--' + esc(level) + '">'
+			+ '<p class="ecalc-stat-label">' + esc(verdict.label || 'Vyplatí se emailing?') + '</p>'
+			+ '<p class="ecalc-stat-value ecalc-verdict-value">' + esc(verdict.value || '') + '</p>'
+			+ (verdict.sub ? '<p class="ecalc-stat-sub">' + esc(verdict.sub) + '</p>' : '')
+			+ '</div>';
+	}
+
+	// Stejná konverze jako dole, hned pod čísly přes celou šířku mřížky
+	function gridCta(res) {
+		return '<div class="ecalc-grid-cta">'
+			+ '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn ecalc-grid-cta-btn"'
+			+ ' data-gtm-id="ecalc-cta-consultation" data-cta-position="u-vypoctu"'
+			+ ' rel="noopener"><span>' + esc(res.cta_text || 'Chci konzultaci zdarma') + '</span></a>'
+			+ (cfg.ctaConsultationNote ? '<p class="ecalc-grid-cta-note">' + esc(cfg.ctaConsultationNote) + '</p>' : '')
+			+ '</div>';
+	}
+
+	function bookingCtaBlock(res) {
+		var html = '<div class="ecalc-booking-cta">';
+		if (res.cta_title) {
+			html += '<h3 class="ecalc-booking-cta-title">' + esc(res.cta_title) + '</h3>';
+		}
+		if (res.cta_subtitle) {
+			html += '<p class="ecalc-booking-cta-sub">' + esc(res.cta_subtitle) + '</p>';
+		}
+		html += '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn"'
+			+ ' data-gtm-id="ecalc-cta-consultation" data-cta-position="dole"'
+			+ ' rel="noopener"><span>' + esc(res.cta_text || 'Chci konzultaci zdarma') + '</span></a>';
+		if (cfg.ctaConsultationNote) {
+			html += '<p class="ecalc-booking-cta-note">' + esc(cfg.ctaConsultationNote) + '</p>';
+		}
+		html += '</div>';
+		return html;
+	}
+
+	// -------------------------------------------------------------------------
+	// Obchodní režim (zámeček) – výpočet pro akvizici, nic se neukládá
+	// -------------------------------------------------------------------------
+	var SALES_KEY  = 'ecalc_sales_token';
+	var salesToken = null;
+
+	function initSalesMode() {
+		var lock = document.getElementById('ecalc-lock');
+		if (!lock) return;
+
+		try {
+			var saved = sessionStorage.getItem(SALES_KEY);
+			if (saved && parseInt(saved.split('.')[0], 10) * 1000 > Date.now()) {
+				enterSalesMode(saved);
+			} else if (saved) {
+				sessionStorage.removeItem(SALES_KEY);
+			}
+		} catch (e) {}
+
+		lock.addEventListener('click', function () {
+			if (salesToken) { exitSalesMode(); } else { openUnlockDialog(); }
+		});
+		var exitBtn = document.getElementById('ecalc-sales-exit');
+		if (exitBtn) exitBtn.addEventListener('click', exitSalesMode);
+	}
+
+	function setSalesUi(on) {
+		var app  = document.getElementById('ecalc-app');
+		var lock = document.getElementById('ecalc-lock');
+		var label = on ? 'Ukončit obchodní režim' : 'Obchodní režim';
+		app.classList.toggle('ecalc-wrapper--sales', on);
+		document.getElementById('ecalc-sales-banner').hidden = !on;
+		lock.setAttribute('aria-label', label);
+		lock.setAttribute('title', label);
+		document.getElementById('ecalc-btn-text').textContent = on ? 'Spočítat (obchodní režim)' : 'Vypočítat potenciál emailingu';
+	}
+
+	function enterSalesMode(token) {
+		salesToken = token;
+		try { sessionStorage.setItem(SALES_KEY, token); } catch (e) {}
+		setSalesUi(true);
+		clearErrors();
+	}
+
+	function exitSalesMode() {
+		salesToken = null;
+		try { sessionStorage.removeItem(SALES_KEY); } catch (e) {}
+		setSalesUi(false);
+		// Výsledek s cenami nesmí zůstat na obrazovce
+		if (document.getElementById('ecalc-result').style.display !== 'none') resetToForm(false);
+	}
+
+	function openUnlockDialog() {
+		var overlay = document.createElement('div');
+		overlay.className = 'ecalc-bm-overlay ecalc-unlock-overlay';
+		overlay.innerHTML =
+			'<form class="ecalc-unlock-box" novalidate>' +
+				'<h3 class="ecalc-unlock-title">Obchodní režim</h3>' +
+				'<p class="ecalc-unlock-text">Výpočet pro akvizici. Nic se neukládá ani neodesílá, kontakty nejsou potřeba.</p>' +
+				'<label class="ecalc-label" for="ecalc-unlock-code">Kód</label>' +
+				'<input class="ecalc-input" type="password" id="ecalc-unlock-code" inputmode="numeric" autocomplete="off" maxlength="32">' +
+				'<p class="ecalc-error-msg ecalc-unlock-error" aria-live="polite"></p>' +
+				'<div class="ecalc-unlock-btns">' +
+					'<button type="submit" class="ecalc-button ecalc-unlock-submit"><span>Odemknout</span></button>' +
+					'<button type="button" class="ecalc-unlock-cancel">Zrušit</button>' +
+				'</div>' +
+			'</form>';
+		document.body.appendChild(overlay);
+		document.body.style.overflow = 'hidden';
+
+		var form   = overlay.querySelector('form');
+		var input  = overlay.querySelector('#ecalc-unlock-code');
+		var errEl  = overlay.querySelector('.ecalc-unlock-error');
+		var submit = overlay.querySelector('.ecalc-unlock-submit');
+		input.focus();
+
+		function close() {
+			overlay.remove();
+			document.body.style.overflow = '';
+			document.removeEventListener('keydown', onEsc);
+		}
+		function onEsc(e) { if (e.key === 'Escape') close(); }
+		document.addEventListener('keydown', onEsc);
+		overlay.querySelector('.ecalc-unlock-cancel').addEventListener('click', close);
+		var openedAt = Date.now();
+		overlay.addEventListener('click', function (e) {
+			if (Date.now() - openedAt < 350) return;
+			if (e.target === overlay) close();
+		});
+
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
+			var code = input.value.trim();
+			if (!code) { errEl.textContent = 'Zadejte kód.'; return; }
+			submit.disabled = true;
+			errEl.textContent = '';
+
+			fetch(cfg.salesUnlockUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
+				body: JSON.stringify({ code: code }),
+			})
+				.then(function (res) { return res.json(); })
+				.then(function (json) {
+					submit.disabled = false;
+					if (json.success && json.token) {
+						close();
+						enterSalesMode(json.token);
+					} else {
+						errEl.textContent = json.message || 'Nesprávný kód.';
+						input.select();
+					}
+				})
+				.catch(function () {
+					submit.disabled = false;
+					errEl.textContent = strings.error_generic;
+				});
 		});
 	}
 
-	function buildPackageCard(pkg, expected_pno, showCta, ctaUrl) {
-		var isRec   = pkg.is_recommended;
+	function submitSales(data) {
+		var btnText = document.getElementById('ecalc-btn-text');
+		var btnLoad = document.getElementById('ecalc-btn-loader');
+		var btnEl   = document.getElementById('ecalc-submit');
+		var errBox  = document.getElementById('ecalc-form-error');
+
+		btnEl.disabled        = true;
+		btnText.style.display = 'none';
+		btnLoad.style.display = '';
+		errBox.style.display  = 'none';
+
+		function done() {
+			btnEl.disabled        = false;
+			btnText.style.display = '';
+			btnLoad.style.display = 'none';
+		}
+
+		// Posíláme jen to, z čeho se počítá, žádné kontakty
+		var payload = {
+			segment:               data.segment,
+			consumable_percentage: data.consumable_percentage,
+			database_range:        data.database_range,
+			revenue_type:          data.revenue_type,
+			revenue_range:         data.revenue_range,
+			revenue_exact:         data.revenue_exact,
+			expected_pno:          data.expected_pno,
+		};
+
+		fetch(cfg.salesCalcUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce, 'X-Ecalc-Sales': salesToken },
+			body: JSON.stringify(payload),
+		})
+			.then(function (res) {
+				return res.json().then(function (json) { return { status: res.status, json: json }; });
+			})
+			.then(function (result) {
+				done();
+				if (result.status === 401) {
+					exitSalesMode();
+					showFormError(result.json.message || 'Obchodní režim vypršel.');
+					return;
+				}
+				if (result.json.success) {
+					showResult(result.json);
+				} else {
+					showFormError(result.json.message || strings.error_generic);
+				}
+			})
+			.catch(function () {
+				done();
+				showFormError(strings.error_generic);
+			});
+	}
+
+	function salesPackagesSection(res, expectedPno) {
+		if (!res.packages || !res.packages.length) return '';
+		var html = '<div class="ecalc-sales-packages">';
+		html += '<p class="ecalc-packages-title">Balíčky (jen pro obchodníka)</p>';
+		if (!res.recommended_package) {
+			html += '<p class="ecalc-sales-packages-note">Do budgetu při zadaném PNO se nevejde žádný balíček.</p>';
+		}
+		html += '<div class="ecalc-packages-grid">';
+		res.packages.forEach(function (pkg) {
+			html += salesPackageCard(pkg, expectedPno);
+		});
+		html += '</div></div>';
+		return html;
+	}
+
+	function salesPackageCard(pkg, expectedPno) {
 		var fitsCls = pkg.fits_pno ? 'ecalc-package-pno--ok' : 'ecalc-package-pno--over';
 		var fitsMsg = pkg.fits_pno
-			? 'Vejde se do vašeho PNO (' + fmtPct(pkg.real_pno) + ')'
-			: (cfg.pnoOverLabel || 'Nad vaším zadaným PNO') + ' (' + fmtPct(pkg.real_pno) + ')';
+			? 'Vejde se do PNO (' + fmtPct(pkg.real_pno) + ')'
+			: (cfg.pnoOverLabel || 'Nad zadaným PNO') + ' (' + fmtPct(pkg.real_pno) + ')';
 
-		var html = '<div class="ecalc-package-card' + (isRec ? ' ecalc-package-card--recommended' : '') + '">';
-
-		if (isRec) {
-			html += '<div class="ecalc-package-badge">Doporučený</div>';
-		}
-
+		var html = '<div class="ecalc-package-card' + (pkg.is_recommended ? ' ecalc-package-card--recommended' : '') + '">';
+		if (pkg.is_recommended) html += '<div class="ecalc-package-badge">Doporučený</div>';
 		html += '<p class="ecalc-package-name">' + esc(pkg.name) + '</p>';
 		html += '<p class="ecalc-package-price">' + fmt(pkg.price) + '</p>';
-		html += '<p class="ecalc-package-price-sub">/ měsíc</p>';
-		html += '<span class="ecalc-package-pno ' + fitsCls + '">' + fitsMsg + '</span>';
-
-		html += '<p class="ecalc-pno-note">Orientační reálné PNO: <strong>' + fmtPct(pkg.real_pno) + '</strong> (vámi zvolené: ' + expected_pno + ' %)</p>';
-
-		if (pkg.description) {
-			html += '<p class="ecalc-package-desc">' + esc(pkg.description) + '</p>';
-		}
-
-		if (pkg.items && pkg.items.length > 0) {
+		html += '<p class="ecalc-package-price-sub">měsíčně</p>';
+		html += '<span class="ecalc-package-pno ' + fitsCls + '">' + esc(fitsMsg) + '</span>';
+		html += '<p class="ecalc-pno-note">Reálné PNO: <strong>' + fmtPct(pkg.real_pno) + '</strong> (zadané: ' + esc(expectedPno) + ' %)</p>';
+		if (pkg.description) html += '<p class="ecalc-package-desc">' + esc(pkg.description) + '</p>';
+		if (pkg.items && pkg.items.length) {
 			html += '<ul class="ecalc-package-items">';
-			pkg.items.forEach(function (it) {
-				html += '<li>' + esc(it) + '</li>';
-			});
+			pkg.items.forEach(function (it) { html += '<li>' + esc(it) + '</li>'; });
 			html += '</ul>';
 		}
-
-		// CTA tlačítko "Poptat balíček" (jen ve splněném scénáři)
-		if (showCta && ctaUrl) {
-			var btnCls = isRec
-				? 'ecalc-package-cta ecalc-package-cta--primary'
-				: 'ecalc-package-cta ecalc-package-cta--secondary';
-			html += '<a href="' + esc(ctaUrl) + '" class="' + btnCls + '"'
-				+ ' data-gtm-id="ecalc-package-cta"'
-				+ ' data-gtm-package="' + esc(pkg.name) + '"'
-				+ ' data-gtm-recommended="' + (isRec ? '1' : '0') + '"'
-				+ ' rel="noopener"><span>Poptat balíček</span></a>';
-		}
-
 		html += '</div>';
 		return html;
 	}
@@ -915,78 +1057,6 @@
 			+ '<p class="ecalc-stat-label">' + esc(label) + '</p>'
 			+ '<p class="ecalc-stat-value">' + value + '</p>'
 			+ s + '</div>';
-	}
-
-	function budgetStatCard(budget, expectedPno, realPno, savings) {
-		var html = '<div class="ecalc-stat-card">'
-			+ '<p class="ecalc-stat-label">Doporučený budget</p>'
-			+ '<p class="ecalc-stat-value">' + fmt(budget) + '</p>'
-			+ '<p class="ecalc-stat-sub">při PNO ' + expectedPno + ' %</p>'
-			+ '<p class="ecalc-stat-real-pno">Reálné PNO doporuč. balíčku: <strong>' + fmtPct(realPno) + '</strong></p>';
-		if (savings > 0) {
-			html += '<div class="ecalc-budget-saving">'
-				+ '<span class="ecalc-budget-saving-label">&#10003; Ušetříte oproti svému budgetu</span>'
-				+ '<strong class="ecalc-budget-saving-amount">' + fmt(savings) + '</strong>'
-				+ '</div>';
-		}
-		html += '</div>';
-		return html;
-	}
-
-	function consultationStatCard(ctaText, ctaUrl) {
-		var btnHtml = '';
-		if (ctaUrl || ctaText) {
-			var href = ctaUrl ? esc(ctaUrl) : '#';
-			btnHtml = '<a href="' + href + '" class="ecalc-stat-cta ecalc-cta-btn"'
-				+ ' data-gtm-id="ecalc-cta-consultation"'
-				+ ' rel="noopener">'
-				+ '<span>' + esc(ctaText || 'Konzultace zdarma') + '</span></a>';
-		}
-		var noteHtml = cfg.ctaConsultationNote
-			? '<p class="ecalc-stat-cta-note">' + esc(cfg.ctaConsultationNote) + '</p>'
-			: '';
-		return '<div class="ecalc-stat-card">'
-			+ '<p class="ecalc-stat-label">Doporučení</p>'
-			+ '<p class="ecalc-stat-value">Konzultace zdarma</p>'
-			+ '<p class="ecalc-stat-sub">pro detailní analýzu</p>'
-			+ btnHtml
-			+ noteHtml
-			+ '</div>';
-	}
-
-	function budgetStatCardAlert(budget, expectedPno, realPno) {
-		return '<div class="ecalc-stat-card">'
-			+ '<p class="ecalc-stat-label">Doporučený budget</p>'
-			+ '<p class="ecalc-stat-value">' + fmt(budget) + '</p>'
-			+ '<p class="ecalc-stat-sub">při PNO ' + expectedPno + ' %</p>'
-			+ '<div class="ecalc-budget-pno-alert">'
-			+ '<span class="ecalc-budget-pno-alert-label">&#9888; Reálné PNO nejbližší varianty</span>'
-			+ '<strong class="ecalc-budget-pno-alert-value">' + fmtPct(realPno) + '</strong>'
-			+ '</div>'
-			+ '</div>';
-	}
-
-	function packageStatCard(name, price, items) {
-		var itemsHtml = '';
-		if (items && items.length > 0) {
-			itemsHtml = '<ul class="ecalc-stat-items">';
-			items.forEach(function (item) {
-				itemsHtml += '<li>' + esc(item) + '</li>';
-			});
-			itemsHtml += '</ul>';
-		}
-		return '<div class="ecalc-stat-card">'
-			+ '<p class="ecalc-stat-label">Doporučený balíček</p>'
-			+ '<p class="ecalc-stat-value">' + esc(name) + '</p>'
-			+ '<p class="ecalc-stat-sub">' + fmt(price) + ' / měsíc</p>'
-			+ itemsHtml
-			+ '<p class="ecalc-stat-sw-note">&#42;&nbsp;K ceně připočtěte licenci emailing SW:'
-			+ ' <strong>200–4 000 Kč/měs.</strong> dle velikosti seznamu kontaktů.</p>'
-			+ '</div>';
-	}
-
-	function row(label, value) {
-		return '<tr><td>' + esc(label) + '</td><td>' + esc(value) + '</td></tr>';
 	}
 
 	function fmt(num) {
@@ -1078,54 +1148,6 @@
 		}
 	}
 
-
-	// -------------------------------------------------------------------------
-	// Inquiry thank-you popup (Poptat balíček)
-	// -------------------------------------------------------------------------
-	function showInquiryThankYou(pkgName, ctaUrl) {
-		var s = cfg.strings || {};
-
-		var visitBtn = ctaUrl
-			? '<a href="' + esc(ctaUrl) + '" class="ecalc-ty-visit" rel="noopener"><span>' + esc(s.inquiry_visit || 'Přejít na web') + '</span></a>'
-			: '';
-
-		var overlay = document.createElement('div');
-		overlay.className = 'ecalc-bm-overlay ecalc-ty-overlay';
-		overlay.innerHTML =
-			'<div class="ecalc-ty-box">' +
-				'<div class="ecalc-ty-icon">✓</div>' +
-				'<h3 class="ecalc-ty-title">' + esc(s.inquiry_title || 'Děkujeme za zájem!') + '</h3>' +
-				(pkgName
-					? '<p class="ecalc-ty-pkg">' + esc(s.inquiry_pkg_label || 'Poptáváte balíček:') + ' <strong>' + esc(pkgName) + '</strong></p>'
-					: '') +
-				'<p class="ecalc-ty-msg">' + esc(s.inquiry_msg || 'Vaše poptávka byla odeslána. Ozveme se vám v nejbližší možné době.') + '</p>' +
-				'<div class="ecalc-ty-btns">' +
-					visitBtn +
-					'<button class="ecalc-ty-close"><span>' + esc(s.inquiry_close || 'Zavřít') + '</span></button>' +
-				'</div>' +
-			'</div>';
-
-		document.body.appendChild(overlay);
-		document.body.style.overflow = 'hidden';
-		overlay.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
-
-		var tyOpenedAt = Date.now();
-
-		function closeIt() {
-			overlay.remove();
-			document.body.style.overflow = '';
-			document.removeEventListener('keydown', onEscTy);
-		}
-
-		function onEscTy(e) { if (e.key === 'Escape') closeIt(); }
-
-		overlay.querySelector('.ecalc-ty-close').addEventListener('click', closeIt);
-		overlay.addEventListener('click', function (e) {
-			if (Date.now() - tyOpenedAt < 350) return;
-			if (e.target === overlay) closeIt();
-		});
-		document.addEventListener('keydown', onEscTy);
-	}
 
 	// -------------------------------------------------------------------------
 	// Booking modal

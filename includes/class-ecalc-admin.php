@@ -887,10 +887,20 @@ class ECAlc_Admin {
 		check_admin_referer( 'ecalc_save_result_texts' );
 
 		$data = [
-			'result_title'  => sanitize_text_field( $_POST['result_title'] ?? 'Výsledek vaší kalkulačky' ),
-			'low_potential' => sanitize_textarea_field( $_POST['low_potential'] ?? '' ),
-			'borderline'    => sanitize_textarea_field( $_POST['borderline'] ?? '' ),
+			'result_title'  => sanitize_text_field( wp_unslash( $_POST['result_title'] ?? 'Výsledek vaší kalkulačky' ) ),
+			'low_potential' => sanitize_textarea_field( wp_unslash( $_POST['low_potential'] ?? '' ) ),
+			'borderline'    => sanitize_textarea_field( wp_unslash( $_POST['borderline'] ?? '' ) ),
+			'good'          => sanitize_textarea_field( wp_unslash( $_POST['good'] ?? '' ) ),
 		];
+
+		$text_fields = [
+			'verdict_label', 'verdict_good', 'verdict_good_sub', 'verdict_borderline', 'verdict_borderline_sub',
+			'verdict_low', 'verdict_low_sub', 'cta_title',
+		];
+		foreach ( $text_fields as $field ) {
+			$data[ $field ] = sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) );
+		}
+		$data['cta_subtitle'] = sanitize_textarea_field( wp_unslash( $_POST['cta_subtitle'] ?? '' ) );
 
 		$this->settings->save_result_texts( $data );
 		wp_redirect( admin_url( 'admin.php?page=ecalc_result_texts&saved=1' ) );
@@ -1138,9 +1148,10 @@ class ECAlc_Admin {
 
 	public function page_security(): void {
 		$this->capability_check();
-		$turnstile = $this->settings->get_turnstile();
-		$notice    = $this->get_notice();
-		$this->render_template( 'admin/page-security.php', compact( 'turnstile', 'notice' ) );
+		$turnstile  = $this->settings->get_turnstile();
+		$sales_mode = $this->settings->get_sales_mode();
+		$notice     = $this->get_notice();
+		$this->render_template( 'admin/page-security.php', compact( 'turnstile', 'sales_mode', 'notice' ) );
 	}
 
 	public function page_gtm(): void {
@@ -1159,6 +1170,14 @@ class ECAlc_Admin {
 		];
 
 		$this->settings->save_turnstile( $data );
+
+		$sales_code = preg_replace( '/\s+/', '', sanitize_text_field( wp_unslash( $_POST['sales_code'] ?? '' ) ) );
+		$this->settings->save_sales_mode( [
+			'enabled' => isset( $_POST['sales_enabled'] ) ? 1 : 0,
+			// Prázdný kód by režim odemkl komukoli, necháme původní
+			'code'    => $sales_code !== '' ? $sales_code : $this->settings->get_sales_mode()['code'],
+		] );
+
 		wp_redirect( admin_url( 'admin.php?page=ecalc_security&saved=1' ) );
 		exit;
 	}

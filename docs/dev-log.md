@@ -76,6 +76,33 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-10-26 - Obchodní režim (zámeček) pro výpočet při akvizici
+
+**Soubory:** `includes/class-ecalc-rest.php`, `includes/class-ecalc-settings.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-plugin.php`, `includes/class-ecalc-shortcode.php`, `templates/frontend-form.php`, `templates/admin/page-security.php`, `assets/js/frontend.js`, `assets/css/frontend.css`
+**Co bylo uděláno:**
+- Zámeček v pravém horním rohu kalkulačky. Po zadání kódu (výchozí `0101`, Admin → Zabezpečení, option `ecalc_sales_mode`) se kalkulačka přepne do obchodního režimu.
+- Kód ověřuje server (`/sales-unlock`), v HTML ani JS není. Vrací token `expirace.hmac`, HMAC obsahuje i kód, takže změna kódu zneplatní staré tokeny. Platnost 12 h, token v `sessionStorage` (do zavření karty). 5 špatných pokusů z IP = blok na 15 min.
+- `/sales-calculate`: jen výpočetní pole, žádné kontakty. Nic se neukládá, neposílá e-mail, SmartEmailing, GTM ani analytika (exit beacon a track-view se v režimu vynechají). Vrací stejný výsledek jako veřejný výpočet + `packages` a `recommended_package`.
+- Frontend: skryje kontakty, souhlasy, Turnstile a průběh, ukáže pruh „Obchodní režim“ s tlačítkem Ukončit. Výsledek bez výzev ke schůzce, místo nich balíčky s cenou a reálným PNO. Ukončení výsledek s cenami smaže z obrazovky.
+- Refaktor: `build_public_result()`, `public_calculation()` a `validate_calculation_fields()` sdílí veřejný výpočet i obchodní režim.
+**Proč:** Obchodník si potřebuje orientačně spočítat, jestli se klientovi vyplatí PNO vs. obrat vs. obor vs. databáze, bez zakládání leadu.
+**Pozor na:** Limit pokusů je podle `REMOTE_ADDR`. Za Cloudflare to může být IP proxy, takže blok může dopadnout i na jiné lidi za stejným uzlem. Pro 15 min a pár pokusů je to přijatelné, ale vědět o tom.
+
+### 2026-10-26 - Výsledek bez balíčků a cen, jediná konverze = rezervace schůzky
+
+**Soubory:** `includes/class-ecalc-rest.php`, `includes/class-ecalc-calculator.php`, `includes/class-ecalc-email.php`, `includes/class-ecalc-settings.php`, `includes/class-ecalc-admin.php`, `templates/admin/page-result-texts.php`, `templates/frontend-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`
+**Co bylo uděláno:**
+- Výpočet beze změny. Výsledek ukazuje potenciál, odhad obratu, budget při PNO a verdikt „Vyplatí se?“ (good / borderline / low podle `result_type`), pod tím text, argumenty a jeden blok „Probereme váš výsledek na konzultaci zdarma“ s tlačítkem do rezervačního kalendáře.
+- REST `/calculate` už neposílá `packages` ani `recommended_package` (ceny nejsou vidět ani v síťovém provozu), místo toho `verdict`, `cta_title`, `cta_subtitle`. Do GTM se balíček neposílá.
+- Argumenty se ukazují i u nízkého potenciálu.
+- Text výsledku u `package_1`/`package_n` je nový obecný `good` (text u balíčku jmenuje balíček).
+- Nové texty v Admin → Texty výsledků (verdikty, výzva).
+- E-maily klientovi: řádky s `{recommended_package*}` / `{inquiry_package}` se vynechají automaticky (i z textů uložených v DB). Admin e-maily, lead a SmartEmailing balíček dál mají.
+- Oprava: název doporučeného balíčku se do leadu nikdy neukládal (přepsalo ho pole `$calc['recommended_package']`), ukládala se jen cena.
+- Odebrán handler a popup „Poptat balíček“.
+**Proč:** Ukazování balíčku a ceny snižovalo konverzi. Cílem je schůzka, obchod se uzavírá až na ní.
+**Pozor na:** Na ostrém webu zkontrolovat Admin → Texty výsledků a Informační panel (uložené texty mohou zmiňovat balíčky). Po nasazení vyprázdnit cache WP Rocket, jinak se servíruje starý minifikovaný `frontend.js`.
+
 ### 2026-07-13 – Telefon jako povinné pole v hlavním formuláři (verze 1.6.0)
 
 **Soubory:** `emailing-calculator.php`, `CHANGELOG.md`, `includes/helpers.php`, `includes/class-ecalc-leads.php`, `includes/class-ecalc-rest.php`, `includes/class-ecalc-settings.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-plugin.php`, `templates/frontend-form.php`, `templates/admin/page-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`, `docs/settings-reference.md`, `docs/overview.md`

@@ -1164,6 +1164,98 @@
 	border-color: var(--ecalc-btn2-border-hover, #4de5c4);
 }
 
+/* Verdikt „Vyplatí se?“ */
+.ecalc-verdict {
+	border-left-width: 4px;
+}
+
+.ecalc-verdict--good       { border-left-color: var(--ecalc-primary); }
+.ecalc-verdict--borderline { border-left-color: var(--ecalc-orange); }
+.ecalc-verdict--low        { border-left-color: var(--ecalc-red); }
+
+.ecalc-verdict--good .ecalc-verdict-value       { color: #0f766e; }
+.ecalc-verdict--borderline .ecalc-verdict-value { color: var(--ecalc-orange); }
+.ecalc-verdict--low .ecalc-verdict-value        { color: var(--ecalc-red); }
+
+/* Karty ve výsledku stejně vysoké, ať v řádku nevzniká mezera */
+.ecalc-result-grid .ecalc-stat-card {
+	align-self: stretch;
+}
+
+/* CTA přímo pod kartou verdiktu (pravý sloupec), tam oči skončí */
+.ecalc-grid-cta {
+	grid-column: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding-left: 14px;
+	margin-top: -4px;
+}
+
+.ecalc-grid-cta-note {
+	margin: 0;
+	font-size: 0.88rem;
+	color: var(--ecalc-gray-600);
+}
+
+@media (max-width: 520px) {
+	.ecalc-grid-cta {
+		flex-direction: column;
+		align-items: stretch;
+		padding: 0 14px;
+		text-align: center;
+	}
+	.ecalc-wrapper .ecalc-grid-cta-btn {
+		display: block;
+		padding-left: 16px;
+		padding-right: 16px;
+	}
+}
+
+/* Rezervace konzultace – jediná konverze výsledku */
+.ecalc-booking-cta {
+	background: var(--ecalc-cta-bg, #3D4644);
+	color: var(--ecalc-dark-text, #ffffff);
+	border-radius: var(--ecalc-radius, 12px);
+	padding: 32px 36px;
+	margin-bottom: 28px;
+	text-align: center;
+}
+
+.ecalc-booking-cta-title {
+	font-family: 'Archivo Narrow', inherit;
+	font-size: var(--ecalc-h2-size, 1.45rem);
+	font-weight: 700;
+	font-style: oblique;
+	color: inherit;
+	margin: 0 0 10px;
+	line-height: 1.2;
+}
+
+.ecalc-booking-cta-sub {
+	font-size: 0.95rem;
+	line-height: 1.6;
+	opacity: 0.85;
+	max-width: 560px;
+	margin: 0 auto 22px;
+}
+
+.ecalc-booking-cta-note {
+	font-size: 0.82rem;
+	opacity: 0.7;
+	margin: 16px 0 0;
+}
+
+@media (max-width: 520px) {
+	.ecalc-booking-cta { padding: 24px 18px; }
+	.ecalc-booking-cta .ecalc-cta-btn {
+		display: block;
+		padding-left: 16px;
+		padding-right: 16px;
+	}
+}
+
 /* ===== INQUIRY THANK-YOU POPUP ===== */
 .ecalc-ty-overlay {
 	/* Sdílí .ecalc-bm-overlay styly */
@@ -1585,6 +1677,7 @@
 	.ecalc-result-grid {
 		grid-template-columns: 1fr;
 	}
+	.ecalc-grid-cta { grid-column: 1; }
 
 	.ecalc-summary-grid {
 		grid-template-columns: 1fr;
@@ -1602,4 +1695,185 @@
 	.ecalc-slider-label--right { text-align: left; }
 	.ecalc-stat-value { font-size: 1.2rem; }
 	.ecalc-toolbar-btns { flex-wrap: wrap; }
+}
+
+/* ===== OBCHODNÍ REŽIM (zámeček) ===== */
+.ecalc-wrapper {
+	position: relative;
+}
+
+.ecalc-wrapper .ecalc-lock {
+	position: absolute;
+	top: -30px;
+	right: 16px;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
+	color: var(--ecalc-cta-bg, #3D4644);
+	opacity: 0.3;
+	cursor: pointer;
+	transition: opacity 0.15s;
+}
+
+.ecalc-wrapper .ecalc-lock:hover,
+.ecalc-wrapper .ecalc-lock:focus-visible {
+	opacity: 1;
+}
+
+.ecalc-wrapper--sales .ecalc-lock {
+	opacity: 1;
+	color: var(--ecalc-orange);
+}
+
+.ecalc-sales-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 20px;
+	padding: 10px 14px;
+	border-radius: 8px;
+	background: #fff7ed;
+	border: 1px solid #fdba74;
+	color: #9a3412;
+	font-size: 0.88rem;
+}
+
+.ecalc-sales-banner[hidden] {
+	display: none;
+}
+
+.ecalc-wrapper .ecalc-sales-exit {
+	background: transparent;
+	border: 1px solid #9a3412;
+	color: #9a3412;
+	border-radius: 6px;
+	padding: 4px 12px;
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ecalc-wrapper .ecalc-sales-exit:hover {
+	background: #9a3412;
+	color: #fff;
+}
+
+/* V obchodním režimu se kontakty, souhlasy ani průběh nevyplňují */
+.ecalc-wrapper--sales #ecalc-contact-block,
+.ecalc-wrapper--sales #ecalc-turnstile-wrap,
+.ecalc-wrapper--sales .ecalc-social-proof-inline,
+.ecalc-wrapper--sales .ecalc-submit-note,
+.ecalc-wrapper--sales .ecalc-progress-wrap,
+.ecalc-wrapper--sales .ecalc-social-proof-result {
+	display: none;
+}
+
+.ecalc-sales-packages-note {
+	text-align: center;
+	color: var(--ecalc-orange);
+	font-size: 0.9rem;
+	margin: 0 0 16px;
+}
+
+/* Okno pro kód (vkládá se do body, mimo .ecalc-wrapper) */
+.ecalc-unlock-box {
+	background: #fff;
+	border-radius: 12px;
+	padding: 28px;
+	width: 100%;
+	max-width: 360px;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+	color: #1e293b;
+	font-size: 15px;
+}
+
+.ecalc-unlock-title {
+	margin: 0 0 6px;
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: #1e293b;
+}
+
+.ecalc-unlock-text {
+	margin: 0 0 16px;
+	font-size: 0.88rem;
+	color: #475569;
+	line-height: 1.5;
+}
+
+.ecalc-unlock-box label {
+	display: block;
+	font-weight: 600;
+	font-size: 0.9rem;
+	margin-bottom: 6px;
+}
+
+.ecalc-unlock-box input {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px 12px;
+	border: 1.5px solid #cbd5e1;
+	border-radius: 8px;
+	font-size: 1.1rem;
+	letter-spacing: 0.2em;
+	background: #fff;
+	color: #1e293b;
+}
+
+.ecalc-unlock-box input:focus {
+	outline: none;
+	border-color: #3D4644;
+}
+
+.ecalc-unlock-error {
+	min-height: 1.2em;
+	margin: 6px 0 10px;
+	font-size: 0.82rem;
+	color: #dc2626;
+}
+
+.ecalc-unlock-btns {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+/* Šablona webu barví tlačítka globálně, proto silnější selektor */
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-submit,
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-submit:hover,
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-submit:focus {
+	flex: 1;
+	padding: 11px 16px;
+	border: 0;
+	border-radius: 8px;
+	background: #3D4644;
+	color: #fff;
+	font-weight: 700;
+	font-size: 0.95rem;
+	cursor: pointer;
+}
+
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-submit:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-cancel,
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-cancel:hover,
+.ecalc-unlock-overlay .ecalc-unlock-box .ecalc-unlock-cancel:focus {
+	padding: 11px 14px;
+	border: 0;
+	background: transparent;
+	color: #475569;
+	font-size: 0.9rem;
+	cursor: pointer;
 }

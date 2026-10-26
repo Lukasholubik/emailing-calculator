@@ -195,10 +195,6 @@ class ECAlc_Calculator {
 	}
 
 	private function build_arguments( string $result_type, array $input, float $consumable_score, float $database_score, float $segment_score, array $revenue_data ): array {
-		if ( ! in_array( $result_type, [ 'package_1', 'package_n', 'borderline' ], true ) ) {
-			return [];
-		}
-
 		$cfg = $this->settings->get_arguments();
 		if ( empty( $cfg['enabled'] ) ) {
 			return [];
