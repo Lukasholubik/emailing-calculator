@@ -66,6 +66,18 @@ class ECAlc_REST {
 			'permission_callback' => fn() => current_user_can( 'manage_options' ),
 		] );
 
+		register_rest_route( 'emailing-calculator/v1', '/sales-unlock', [
+			'methods'             => 'POST',
+			'callback'            => [ $this, 'handle_sales_unlock' ],
+			'permission_callback' => '__return_true',
+		] );
+
+		register_rest_route( 'emailing-calculator/v1', '/sales-calculate', [
+			'methods'             => 'POST',
+			'callback'            => [ $this, 'handle_sales_calculate' ],
+			'permission_callback' => '__return_true',
+		] );
+
 		register_rest_route( 'emailing-calculator/v1', '/track-view', [
 			'methods'             => 'POST',
 			'callback'            => [ $this, 'handle_track_view' ],
@@ -170,8 +182,6 @@ class ECAlc_REST {
 
 		$result_texts = $this->settings->get_result_texts();
 
-		$result_text = $this->get_result_text( $calc['result_type'], $calc, $result_texts );
-
 		$lead_data = array_merge( [
 			'name'              => sanitize_text_field( $params['name'] ),
 			'email'             => sanitize_email( $params['email'] ),
@@ -275,31 +285,164 @@ class ECAlc_REST {
 				'monthly_revenue'       => $monthly_revenue,
 				'expected_pno'          => (int) $input['expected_pno'],
 			],
-			'calculation' => [
-				'consumable_score'    => $calc['consumable_score'],
-				'database_score'      => $calc['database_score'],
-				'segment_score'       => $calc['segment_score'],
-				'total_score'         => $calc['total_score'],
-				'final_potential'     => $calc['final_potential'],
-				'emailing_revenue_low'  => $calc['emailing_revenue_low'],
-				'emailing_revenue_mid'  => $calc['emailing_revenue_mid'],
-				'emailing_revenue_high' => $calc['emailing_revenue_high'],
-				'available_budget'    => $calc['available_budget'],
-			],
-			'result' => [
-				'type'                => $calc['result_type'],
-				'title'               => esc_html( $result_texts['result_title'] ?? 'Výsledek vaší kalkulačky' ),
-				'text'                => wp_kses_post( $result_text ),
-				// Balíčky a ceny návštěvník nevidí, cílem výsledku je rezervace schůzky.
-				// Doporučený balíček zůstává jen interně (lead, admin e-mail, SmartEmailing).
-				'verdict'             => $this->get_verdict( $calc['result_type'], $result_texts ),
-				'cta_title'           => esc_html( $result_texts['cta_title'] ?? '' ),
-				'cta_subtitle'        => esc_html( $result_texts['cta_subtitle'] ?? '' ),
-				'cta_text'            => esc_html( $cfg['cta_text'] ),
-				'cta_url'             => esc_url( $cfg['cta_url'] ),
-				'arguments'           => $this->esc_arguments( $calc['arguments'] ?? [] ),
-			],
+			'calculation' => $this->public_calculation( $calc ),
+			'result'      => $this->build_public_result( $calc, $cfg, $result_texts ),
 		], 200 );
+	}
+
+	// -------------------------------------------------------------------------
+	// Obchodní režim (zámeček) – výpočet pro akvizici, nic se neukládá ani neodesílá
+	// -------------------------------------------------------------------------
+
+	private const SALES_TOKEN_TTL     = 12 * HOUR_IN_SECONDS;
+	private const SALES_MAX_ATTEMPTS  = 5;
+	private const SALES_LOCKOUT       = 15 * MINUTE_IN_SECONDS;
+
+	public function handle_sales_unlock( WP_REST_Request $request ): WP_REST_Response {
+		if ( ! $this->verify_nonce( $request ) ) {
+			return $this->error( 'invalid_nonce', 'Neplatný bezpečnostní token. Obnovte stránku.', 403 );
+		}
+
+		$sales = $this->settings->get_sales_mode();
+		if ( empty( $sales['enabled'] ) ) {
+			return $this->error( 'sales_disabled', 'Obchodní režim je vypnutý.', 403 );
+		}
+
+		// Kód má jen pár číslic, bez limitu by se dal uhodnout
+		$attempts_key = 'ecalc_sales_try_' . md5( ecalc_get_client_ip() );
+		$attempts     = (int) get_transient( $attempts_key );
+		if ( $attempts >= self::SALES_MAX_ATTEMPTS ) {
+			return $this->error( 'rate_limit', 'Příliš mnoho pokusů. Zkuste to za 15 minut.', 429 );
+		}
+
+		$params = $request->get_json_params() ?: $request->get_body_params();
+		$code   = preg_replace( '/\s+/', '', sanitize_text_field( (string) ( $params['code'] ?? '' ) ) );
+
+		if ( $code === '' || ! hash_equals( (string) $sales['code'], $code ) ) {
+			set_transient( $attempts_key, $attempts + 1, self::SALES_LOCKOUT );
+			return $this->error( 'invalid_code', 'Nesprávný kód.', 403 );
+		}
+
+		delete_transient( $attempts_key );
+		$expires = time() + self::SALES_TOKEN_TTL;
+
+		return new WP_REST_Response( [
+			'success' => true,
+			'token'   => $expires . '.' . $this->sales_signature( $expires, (string) $sales['code'] ),
+			'expires' => $expires,
+		], 200 );
+	}
+
+	public function handle_sales_calculate( WP_REST_Request $request ): WP_REST_Response {
+		if ( ! $this->verify_nonce( $request ) ) {
+			return $this->error( 'invalid_nonce', 'Neplatný bezpečnostní token. Obnovte stránku.', 403 );
+		}
+		if ( ! $this->verify_sales_token( (string) $request->get_header( 'X-Ecalc-Sales' ) ) ) {
+			return $this->error( 'sales_locked', 'Obchodní režim vypršel. Odemkněte ho znovu kódem.', 401 );
+		}
+
+		$params = $request->get_json_params() ?: $request->get_body_params();
+
+		$validation = $this->validate_calculation_fields( $params );
+		if ( is_wp_error( $validation ) ) {
+			return $this->error( $validation->get_error_code(), $validation->get_error_message(), 422 );
+		}
+
+		$monthly_revenue = $this->resolve_monthly_revenue( $params );
+		if ( $monthly_revenue === null ) {
+			return $this->error( 'invalid_revenue', 'Zadejte nebo vyberte měsíční obrat.', 422 );
+		}
+
+		$input = [
+			'monthly_revenue'       => $monthly_revenue,
+			'consumable_percentage' => (float) $params['consumable_percentage'],
+			'database_range'        => sanitize_text_field( $params['database_range'] ),
+			'segment'               => sanitize_text_field( $params['segment'] ),
+			'expected_pno'          => (float) $params['expected_pno'],
+		];
+
+		$calc         = $this->calculator->calculate( $input );
+		$cfg          = $this->settings->get_settings();
+		$result_texts = $this->settings->get_result_texts();
+
+		$result = $this->build_public_result( $calc, $cfg, $result_texts );
+		// Obchodník vidí i balíčky s cenami, návštěvník je nikdy nedostane
+		$result['packages']            = $this->esc_packages( $calc['packages'] );
+		$result['recommended_package'] = $calc['recommended_package'] ? $this->esc_packages( [ $calc['recommended_package'] ] )[0] : null;
+
+		return new WP_REST_Response( [
+			'success'     => true,
+			'sales_mode'  => true,
+			'lead'        => [
+				'segment'               => esc_html( $input['segment'] ),
+				'consumable_percentage' => (int) $input['consumable_percentage'],
+				'database_range'        => esc_html( $input['database_range'] ),
+				'monthly_revenue'       => $monthly_revenue,
+				'expected_pno'          => (int) $input['expected_pno'],
+			],
+			'calculation' => $this->public_calculation( $calc ),
+			'result'      => $result,
+		], 200 );
+	}
+
+	private function sales_signature( int $expires, string $code ): string {
+		// Kód je součástí podpisu: po jeho změně v adminu přestanou staré přístupy platit
+		return hash_hmac( 'sha256', $expires . '|' . $code, wp_salt( 'nonce' ) );
+	}
+
+	private function verify_sales_token( string $token ): bool {
+		$sales = $this->settings->get_sales_mode();
+		if ( empty( $sales['enabled'] ) || ! str_contains( $token, '.' ) ) {
+			return false;
+		}
+		[ $expires, $signature ] = explode( '.', $token, 2 );
+		if ( ! ctype_digit( $expires ) || (int) $expires < time() ) {
+			return false;
+		}
+		return hash_equals( $this->sales_signature( (int) $expires, (string) $sales['code'] ), $signature );
+	}
+
+	/** Texty jako čistý text, do HTML je escapuje frontend (esc()). */
+	private function esc_packages( array $packages ): array {
+		return array_map( fn( $pkg ) => [
+			'name'           => wp_strip_all_tags( (string) $pkg['name'] ),
+			'price'          => (float) $pkg['price'],
+			'description'    => wp_strip_all_tags( (string) ( $pkg['description'] ?? '' ) ),
+			'items'          => array_map( fn( $item ) => wp_strip_all_tags( (string) $item ), (array) ( $pkg['items'] ?? [] ) ),
+			'real_pno'       => (float) $pkg['real_pno'],
+			'fits_pno'       => (bool) $pkg['fits_pno'],
+			'is_recommended' => (bool) $pkg['is_recommended'],
+		], $packages );
+	}
+
+	private function public_calculation( array $calc ): array {
+		return [
+			'consumable_score'      => $calc['consumable_score'],
+			'database_score'        => $calc['database_score'],
+			'segment_score'         => $calc['segment_score'],
+			'total_score'           => $calc['total_score'],
+			'final_potential'       => $calc['final_potential'],
+			'emailing_revenue_low'  => $calc['emailing_revenue_low'],
+			'emailing_revenue_mid'  => $calc['emailing_revenue_mid'],
+			'emailing_revenue_high' => $calc['emailing_revenue_high'],
+			'available_budget'      => $calc['available_budget'],
+		];
+	}
+
+	private function build_public_result( array $calc, array $cfg, array $result_texts ): array {
+		return [
+			'type'         => $calc['result_type'],
+			'title'        => esc_html( $result_texts['result_title'] ?? 'Výsledek vaší kalkulačky' ),
+			'text'         => wp_kses_post( $this->get_result_text( $calc['result_type'], $calc, $result_texts ) ),
+			// Balíčky a ceny návštěvník nevidí, cílem výsledku je rezervace schůzky.
+			// Doporučený balíček zůstává jen interně (lead, admin e-mail, SmartEmailing).
+			'verdict'      => $this->get_verdict( $calc['result_type'], $result_texts ),
+			'cta_title'    => esc_html( $result_texts['cta_title'] ?? '' ),
+			'cta_subtitle' => esc_html( $result_texts['cta_subtitle'] ?? '' ),
+			'cta_text'     => esc_html( $cfg['cta_text'] ),
+			'cta_url'      => esc_url( $cfg['cta_url'] ),
+			'arguments'    => $this->esc_arguments( $calc['arguments'] ?? [] ),
+		];
 	}
 
 	public function handle_check_email( WP_REST_Request $request ): WP_REST_Response {
@@ -572,6 +715,14 @@ class ECAlc_REST {
 		if ( mb_strlen( (string) $params['shop_url'], 'UTF-8' ) > 500 ) {
 			return new WP_Error( 'invalid_url', 'URL e-shopu je příliš dlouhá.' );
 		}
+		if ( empty( $params['consent_data'] ) ) {
+			return new WP_Error( 'missing_consent', 'Pro pokračování je nutné souhlasit se zpracováním údajů.' );
+		}
+		return $this->validate_calculation_fields( $params );
+	}
+
+	/** Pole, ze kterých se počítá (sdílí veřejný výpočet i obchodní režim). */
+	private function validate_calculation_fields( array $params ): true|WP_Error {
 		if ( empty( $params['segment'] ) ) {
 			return new WP_Error( 'missing_segment', 'Vyberte segment e-shopu.' );
 		}
@@ -591,9 +742,6 @@ class ECAlc_REST {
 		$pno = (float) $params['expected_pno'];
 		if ( $pno < 1 || $pno > 100 ) {
 			return new WP_Error( 'invalid_pno', 'Očekávané PNO musí být v rozsahu 1–100 %.' );
-		}
-		if ( empty( $params['consent_data'] ) ) {
-			return new WP_Error( 'missing_consent', 'Pro pokračování je nutné souhlasit se zpracováním údajů.' );
 		}
 		return true;
 	}

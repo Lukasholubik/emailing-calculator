@@ -100,6 +100,8 @@ emailing-calculator/
 | `/cta-click` | POST | Nonce + Token | Zaznamenání kliknutí na CTA |
 | `/save-phone` | POST | Nonce + Token | Uložení telefonního čísla (legacy – od v.1.6.0 se telefon sbírá rovnou v `/calculate`, frontend endpoint už nevolá) |
 | `/resend/{id}` | POST | manage_options | Ruční resync do SmartEmailing |
+| `/sales-unlock` | POST | Nonce + kód | Obchodní režim: ověří kód (`ecalc_sales_mode`), vrátí podepsaný token na 12 h; 5 špatných pokusů = IP blok 15 min |
+| `/sales-calculate` | POST | Nonce + `X-Ecalc-Sales` | Obchodní režim: výpočet + balíčky s cenami, nic neukládá ani neodesílá |
 | `/track-view` | POST | Public | Analytika – zobrazení stránky |
 | `/track-exit` | POST | Public | Analytika – opuštění formuláře |
 

@@ -313,6 +313,20 @@ class ECAlc_Settings {
 		update_option( 'ecalc_turnstile', $data );
 	}
 
+	/** Obchodní režim (zámeček) – výpočet pro akvizici bez ukládání a odesílání. */
+	public function get_sales_mode(): array {
+		$defaults = [
+			'enabled' => 1,
+			'code'    => '0101',
+		];
+		$saved = get_option( 'ecalc_sales_mode', [] );
+		return wp_parse_args( $saved, $defaults );
+	}
+
+	public function save_sales_mode( array $data ): void {
+		update_option( 'ecalc_sales_mode', $data );
+	}
+
 	private function default_segments(): array {
 		return [
 			// Potraviny a nápoje

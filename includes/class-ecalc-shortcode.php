@@ -35,6 +35,8 @@ class ECAlc_Shortcode {
 		$turnstile_enabled  = ! empty( $ts['enabled'] ) && ! empty( $ts['site_key'] );
 		$turnstile_site_key = $turnstile_enabled ? $ts['site_key'] : '';
 
+		$sales_enabled = ! empty( $this->settings->get_sales_mode()['enabled'] );
+
 		ob_start();
 		include ECALC_PLUGIN_DIR . 'templates/frontend-form.php';
 		return ob_get_clean();

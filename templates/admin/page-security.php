@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** @var array $notice */
 ?>
 <div class="wrap ecalc-admin">
-	<h1>Zabezpečení – Cloudflare Turnstile</h1>
+	<h1>Zabezpečení</h1>
 
 	<?php if ( $notice['type'] ) : ?>
 		<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
@@ -64,6 +64,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 						value="<?php echo esc_attr( $turnstile['secret_key'] ?? '' ); ?>"
 						class="regular-text" placeholder="0x4AAAAAAA...">
 					<p class="description">Soukromý klíč – používá se pouze na serveru pro ověření. Nikdy ho nesdílejte.</p>
+				</td>
+			</tr>
+		</table>
+
+		<h2>Obchodní režim (zámeček)</h2>
+		<p>Zámeček v rohu kalkulačky. Po zadání kódu se kalkulačka přepne do režimu pro obchodníka: nevyžaduje kontakty, nic neukládá, neposílá e-maily ani data do SmartEmailingu a GTM a ve výsledku ukazuje i balíčky s cenami. Kód se ověřuje na serveru, po 5 špatných pokusech se IP na 15 minut zablokuje.</p>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row">Zapnout zámeček</th>
+				<td>
+					<label>
+						<input type="checkbox" name="sales_enabled" value="1"
+							<?php checked( 1, (int) ( $sales_mode['enabled'] ?? 0 ) ); ?>>
+						Zobrazit zámeček a povolit obchodní režim
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="sales_code">Kód</label></th>
+				<td>
+					<input type="text" id="sales_code" name="sales_code" autocomplete="off"
+						value="<?php echo esc_attr( $sales_mode['code'] ?? '' ); ?>" class="regular-text">
+					<p class="description">Prázdné pole kód nezmění. Po změně kódu přestanou platit dříve odemčené přístupy.</p>
 				</td>
 			</tr>
 		</table>

@@ -1148,9 +1148,10 @@ class ECAlc_Admin {
 
 	public function page_security(): void {
 		$this->capability_check();
-		$turnstile = $this->settings->get_turnstile();
-		$notice    = $this->get_notice();
-		$this->render_template( 'admin/page-security.php', compact( 'turnstile', 'notice' ) );
+		$turnstile  = $this->settings->get_turnstile();
+		$sales_mode = $this->settings->get_sales_mode();
+		$notice     = $this->get_notice();
+		$this->render_template( 'admin/page-security.php', compact( 'turnstile', 'sales_mode', 'notice' ) );
 	}
 
 	public function page_gtm(): void {
@@ -1169,6 +1170,14 @@ class ECAlc_Admin {
 		];
 
 		$this->settings->save_turnstile( $data );
+
+		$sales_code = preg_replace( '/\s+/', '', sanitize_text_field( wp_unslash( $_POST['sales_code'] ?? '' ) ) );
+		$this->settings->save_sales_mode( [
+			'enabled' => isset( $_POST['sales_enabled'] ) ? 1 : 0,
+			// Prázdný kód by režim odemkl komukoli, necháme původní
+			'code'    => $sales_code !== '' ? $sales_code : $this->settings->get_sales_mode()['code'],
+		] );
+
 		wp_redirect( admin_url( 'admin.php?page=ecalc_security&saved=1' ) );
 		exit;
 	}

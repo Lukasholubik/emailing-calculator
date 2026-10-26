@@ -8,10 +8,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** @var string $rest_url */
 /** @var string $nonce */
 /** @var int $marketing_required */
+/** @var bool $sales_enabled */
 ?>
 <div class="ecalc-wrapper" id="ecalc-app"
 	data-rest-url="<?php echo esc_url( $rest_url ); ?>"
 	data-nonce="<?php echo esc_attr( $nonce ); ?>">
+
+	<?php if ( ! empty( $sales_enabled ) ) : ?>
+		<!-- Zámeček: obchodní režim pro akvizici (kód se ověřuje na serveru) -->
+		<button type="button" class="ecalc-lock" id="ecalc-lock" aria-label="Obchodní režim" title="Obchodní režim">
+			<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+		</button>
+	<?php endif; ?>
 
 	<div class="ecalc-layout">
 		<!-- ===================== FORMULÁŘ ===================== -->
@@ -23,6 +31,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<div class="ecalc-progress-wrap" aria-hidden="true">
 					<div class="ecalc-progress-bar"><div class="ecalc-progress-fill" id="ecalc-progress-fill"></div></div>
 					<p class="ecalc-progress-text" id="ecalc-progress-text">Vyplněno 0 %</p>
+				</div>
+
+				<div class="ecalc-sales-banner" id="ecalc-sales-banner" hidden>
+					<span><strong>Obchodní režim</strong> · nic se neukládá ani neodesílá</span>
+					<button type="button" class="ecalc-sales-exit" id="ecalc-sales-exit">Ukončit</button>
 				</div>
 
 				<form id="ecalc-form" novalidate>
@@ -118,6 +131,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<span class="ecalc-error-msg" id="ecalc-error-pno"></span>
 					</div>
 
+					<div id="ecalc-contact-block">
 					<p class="ecalc-contact-divider">Skvělé, teď už jen kontakt pro zaslání výsledků:</p>
 
 					<div class="ecalc-field">
@@ -160,6 +174,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						</label>
 						<span class="ecalc-error-msg" id="ecalc-error-consent-marketing"></span>
 					</div>
+					</div><!-- /#ecalc-contact-block -->
 
 					<div id="ecalc-form-error" class="ecalc-notice ecalc-notice--error" style="display:none;"></div>
 
