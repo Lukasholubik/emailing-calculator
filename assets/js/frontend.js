@@ -739,7 +739,8 @@
 		html += statCard('Potenciál emailingu', fmtPct(calc.final_potential), 'orientační odhad');
 		html += statCard('Odhadovaný obrat z emailingu', fmt(calc.emailing_revenue_mid), fmt(calc.emailing_revenue_low) + ' – ' + fmt(calc.emailing_revenue_high) + ' měsíčně');
 		html += statCard('Budget na emailing', fmt(calc.available_budget), 'měsíčně při vámi zvoleném PNO ' + lead.expected_pno + ' %');
-		html += verdictStatCard(verdict, res);
+		html += verdictStatCard(verdict);
+		html += gridCta(res);
 		html += '</div>';
 
 		// Result text
@@ -774,16 +775,22 @@
 		return html;
 	}
 
-	function verdictStatCard(verdict, res) {
+	function verdictStatCard(verdict) {
 		var level = verdict.level || 'good';
 		return '<div class="ecalc-stat-card ecalc-verdict ecalc-verdict--' + esc(level) + '">'
 			+ '<p class="ecalc-stat-label">' + esc(verdict.label || 'Vyplatí se emailing?') + '</p>'
 			+ '<p class="ecalc-stat-value ecalc-verdict-value">' + esc(verdict.value || '') + '</p>'
 			+ (verdict.sub ? '<p class="ecalc-stat-sub">' + esc(verdict.sub) + '</p>' : '')
-			// Stejná konverze jako dole, hned u čísel
-			+ '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn ecalc-verdict-cta"'
-			+ ' data-gtm-id="ecalc-cta-consultation" data-cta-position="karta"'
+			+ '</div>';
+	}
+
+	// Stejná konverze jako dole, hned pod čísly přes celou šířku mřížky
+	function gridCta(res) {
+		return '<div class="ecalc-grid-cta">'
+			+ '<a href="' + esc(res.cta_url || '#') + '" class="ecalc-cta-btn ecalc-grid-cta-btn"'
+			+ ' data-gtm-id="ecalc-cta-consultation" data-cta-position="u-vypoctu"'
 			+ ' rel="noopener"><span>' + esc(res.cta_text || 'Chci konzultaci zdarma') + '</span></a>'
+			+ (cfg.ctaConsultationNote ? '<p class="ecalc-grid-cta-note">' + esc(cfg.ctaConsultationNote) + '</p>' : '')
 			+ '</div>';
 	}
 

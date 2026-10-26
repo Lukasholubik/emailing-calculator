@@ -1177,18 +1177,38 @@
 .ecalc-verdict--borderline .ecalc-verdict-value { color: var(--ecalc-orange); }
 .ecalc-verdict--low .ecalc-verdict-value        { color: var(--ecalc-red); }
 
-.ecalc-wrapper .ecalc-verdict-cta {
-	margin: 16px 0 0 6px;
-	padding: 10px 26px;
-	font-size: 0.92rem;
+/* Karty ve výsledku stejně vysoké, ať v řádku nevzniká mezera */
+.ecalc-result-grid .ecalc-stat-card {
+	align-self: stretch;
+}
+
+/* CTA hned pod čísly, přes oba sloupce */
+.ecalc-grid-cta {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px 24px;
+	padding-left: 14px;
+}
+
+.ecalc-grid-cta-note {
+	margin: 0;
+	font-size: 0.88rem;
+	color: var(--ecalc-gray-600);
 }
 
 @media (max-width: 520px) {
-	.ecalc-wrapper .ecalc-verdict-cta {
-		display: block;
-		margin-left: 6px;
-		margin-right: 6px;
+	.ecalc-grid-cta {
+		flex-direction: column;
+		align-items: stretch;
+		padding: 0 14px;
 		text-align: center;
+	}
+	.ecalc-wrapper .ecalc-grid-cta-btn {
+		display: block;
+		padding-left: 16px;
+		padding-right: 16px;
 	}
 }
 
