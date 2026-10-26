@@ -1182,14 +1182,15 @@
 	align-self: stretch;
 }
 
-/* CTA hned pod čísly, přes oba sloupce */
+/* CTA přímo pod kartou verdiktu (pravý sloupec), tam oči skončí */
 .ecalc-grid-cta {
-	grid-column: 1 / -1;
+	grid-column: 2;
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 12px 24px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
 	padding-left: 14px;
+	margin-top: -4px;
 }
 
 .ecalc-grid-cta-note {
@@ -1676,6 +1677,7 @@
 	.ecalc-result-grid {
 		grid-template-columns: 1fr;
 	}
+	.ecalc-grid-cta { grid-column: 1; }
 
 	.ecalc-summary-grid {
 		grid-template-columns: 1fr;
