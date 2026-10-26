@@ -3,6 +3,25 @@
 VĹˇechny vĂ˝raznĂ© zmÄ›ny jsou dokumentovĂˇny v tomto souboru.
 FormĂˇt dle [Keep a Changelog](https://keepachangelog.com/cs/1.0.0/).
 
+## [1.7.0] - 2026-10-26
+
+### Změněno
+- Výsledek kalkulačky už návštěvníkovi neukazuje balíčky ani ceny. Ukazuje potenciál, odhad obratu, budget při PNO a verdikt „Vyplatí se emailing?“ (vyplatí se / hraničně / spíše ne).
+- Jediná konverze výsledku je rezervace konzultace: tlačítko pod kartou verdiktu a blok s výzvou na konci výsledku. GTM `ecalc_cta_click` nese `ecalc_cta_position` (`u-vypoctu` / `dole`).
+- REST `/calculate` neposílá `packages` ani `recommended_package`, do GTM se balíček neposílá.
+- Z e-mailů klientovi se řádky s balíčkem vynechávají automaticky. Admin e-mail, lead a SmartEmailing balíček dál mají.
+- Argumenty „Proč máte tento potenciál“ se ukazují i u nízkého potenciálu.
+
+### Přidáno
+- Obchodní režim (zámeček v rohu kalkulačky): po zadání kódu výpočet bez kontaktů, nic se neukládá ani neodesílá, výsledek ukazuje balíčky s cenou a reálným PNO. Kód v Admin → Zabezpečení (výchozí `0101`, změňte ho), ověřuje server, 5 pokusů / 15 min.
+- Nové texty v Admin → Texty výsledků (verdikty, výzva ke konzultaci).
+
+### Opraveno
+- Název doporučeného balíčku se k leadu neukládal (ukládala se jen cena).
+
+### Odstraněno
+- Tlačítka „Poptat balíček“ a děkovací okno poptávky.
+
 ## [1.6.0] – 2026-07-13
 
 ### Přidáno
