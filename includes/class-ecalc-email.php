@@ -52,14 +52,22 @@ class ECAlc_Email {
 		] );
 	}
 
+	/**
+	 * Klient balíček ani cenu nevidí (cílem výsledku je schůzka), interně zůstávají.
+	 * Odstraní z klientské šablony celé řádky s proměnnou balíčku.
+	 */
+	private function strip_package_lines( string $template ): string {
+		return (string) preg_replace( '/^.*\{(recommended_package[a-z_]*|inquiry_package)\}.*(\R|$)/mu', '', $template );
+	}
+
 	private function send( string $to, string $subject, string $body ): void {
 		wp_mail( sanitize_email( $to ), $subject, $body, [ 'Content-Type: text/plain; charset=UTF-8' ] );
 	}
 
 	public function send_followup_email( array $lead, array $cfg ): void {
 		$data    = $this->build_email_data( $lead );
-		$subject = ecalc_replace_variables( $cfg['trigger_followup_subject'] ?? '', $data );
-		$body    = ecalc_replace_variables( $cfg['trigger_followup_body'] ?? '', $data );
+		$subject = ecalc_replace_variables( $this->strip_package_lines( $cfg['trigger_followup_subject'] ?? '' ), $data );
+		$body    = ecalc_replace_variables( $this->strip_package_lines( $cfg['trigger_followup_body'] ?? '' ), $data );
 		$this->send( $lead['email'], $subject, $body );
 	}
 
@@ -74,8 +82,8 @@ class ECAlc_Email {
 
 	public function send_inquiry_client( array $lead, array $cfg ): void {
 		$data    = $this->build_email_data( $lead );
-		$subject = ecalc_replace_variables( $cfg['trigger_inquiry_client_subject'] ?? '', $data );
-		$body    = ecalc_replace_variables( $cfg['trigger_inquiry_client_body'] ?? '', $data );
+		$subject = ecalc_replace_variables( $this->strip_package_lines( $cfg['trigger_inquiry_client_subject'] ?? '' ), $data );
+		$body    = ecalc_replace_variables( $this->strip_package_lines( $cfg['trigger_inquiry_client_body'] ?? '' ), $data );
 		$this->send( $lead['email'], $subject, $body );
 	}
 
@@ -90,8 +98,8 @@ class ECAlc_Email {
 
 	public function send_consultation_client( array $lead, array $cfg ): void {
 		$data    = $this->build_email_data( $lead );
-		$subject = ecalc_replace_variables( $cfg['trigger_consultation_client_subject'] ?? '', $data );
-		$body    = ecalc_replace_variables( $cfg['trigger_consultation_client_body'] ?? '', $data );
+		$subject = ecalc_replace_variables( $this->strip_package_lines( $cfg['trigger_consultation_client_subject'] ?? '' ), $data );
+		$body    = ecalc_replace_variables( $this->strip_package_lines( $cfg['trigger_consultation_client_body'] ?? '' ), $data );
 		$this->send( $lead['email'], $subject, $body );
 	}
 
@@ -103,8 +111,8 @@ class ECAlc_Email {
 		}
 
 		$to      = sanitize_email( $lead_data['email'] );
-		$subject = ecalc_replace_variables( $cfg['client_subject'], $lead_data );
-		$body    = ecalc_replace_variables( $cfg['client_body'], $lead_data );
+		$subject = ecalc_replace_variables( $this->strip_package_lines( $cfg['client_subject'] ), $lead_data );
+		$body    = ecalc_replace_variables( $this->strip_package_lines( $cfg['client_body'] ), $lead_data );
 		$headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
 
 		wp_mail( $to, $subject, $body, $headers );

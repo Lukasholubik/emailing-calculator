@@ -195,6 +195,8 @@ class ECAlc_REST {
 			'referrer'          => sanitize_text_field( $params['referrer']     ?? '' ),
 			'time_to_submit'    => isset( $params['time_to_submit'] ) ? max( 0, min( 7200, (int) $params['time_to_submit'] ) ) : null,
 		], $calc );
+		// $calc['recommended_package'] je pole balíčku a přepsalo by název, do DB a e-mailu patří název
+		$lead_data['recommended_package'] = $calc['recommended_package_name'];
 
 		$se_result = $this->smartemailing->send_lead( $lead_data, (bool) $lead_data['consent_marketing'] );
 		$lead_data['smartemailing_status'] = $se_result['status'];
@@ -288,8 +290,11 @@ class ECAlc_REST {
 				'type'                => $calc['result_type'],
 				'title'               => esc_html( $result_texts['result_title'] ?? 'Výsledek vaší kalkulačky' ),
 				'text'                => wp_kses_post( $result_text ),
-				'recommended_package' => $calc['recommended_package'],
-				'packages'            => $calc['packages'],
+				// Balíčky a ceny návštěvník nevidí, cílem výsledku je rezervace schůzky.
+				// Doporučený balíček zůstává jen interně (lead, admin e-mail, SmartEmailing).
+				'verdict'             => $this->get_verdict( $calc['result_type'], $result_texts ),
+				'cta_title'           => esc_html( $result_texts['cta_title'] ?? '' ),
+				'cta_subtitle'        => esc_html( $result_texts['cta_subtitle'] ?? '' ),
 				'cta_text'            => esc_html( $cfg['cta_text'] ),
 				'cta_url'             => esc_url( $cfg['cta_url'] ),
 				'arguments'           => $this->esc_arguments( $calc['arguments'] ?? [] ),
@@ -624,11 +629,23 @@ class ECAlc_REST {
 			return $texts['borderline'] ?? '';
 		}
 
-		$recommended = $calc['recommended_package'];
-		if ( $recommended && ! empty( $recommended['result_text'] ) ) {
-			return $recommended['result_text'];
-		}
-		return '';
+		// Text u balíčku (Balíčky → Text výsledku) jmenuje balíček, návštěvník proto dostane obecný text
+		return $texts['good'] ?? '';
+	}
+
+	private function get_verdict( string $result_type, array $texts ): array {
+		$level = match ( $result_type ) {
+			'low_potential' => 'low',
+			'borderline'    => 'borderline',
+			default         => 'good',
+		};
+
+		return [
+			'level' => $level,
+			'label' => esc_html( $texts['verdict_label'] ?? '' ),
+			'value' => esc_html( $texts[ 'verdict_' . $level ] ?? '' ),
+			'sub'   => esc_html( $texts[ 'verdict_' . $level . '_sub' ] ?? '' ),
+		];
 	}
 
 	private function esc_arguments( array $arguments ): array {

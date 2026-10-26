@@ -76,6 +76,21 @@ Před každým `git push` automaticky provedu kontrolu:
 
 ## Záznamy
 
+### 2026-10-26 - Výsledek bez balíčků a cen, jediná konverze = rezervace schůzky
+
+**Soubory:** `includes/class-ecalc-rest.php`, `includes/class-ecalc-calculator.php`, `includes/class-ecalc-email.php`, `includes/class-ecalc-settings.php`, `includes/class-ecalc-admin.php`, `templates/admin/page-result-texts.php`, `templates/frontend-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`
+**Co bylo uděláno:**
+- Výpočet beze změny. Výsledek ukazuje potenciál, odhad obratu, budget při PNO a verdikt „Vyplatí se?“ (good / borderline / low podle `result_type`), pod tím text, argumenty a jeden blok „Probereme váš výsledek na konzultaci zdarma“ s tlačítkem do rezervačního kalendáře.
+- REST `/calculate` už neposílá `packages` ani `recommended_package` (ceny nejsou vidět ani v síťovém provozu), místo toho `verdict`, `cta_title`, `cta_subtitle`. Do GTM se balíček neposílá.
+- Argumenty se ukazují i u nízkého potenciálu.
+- Text výsledku u `package_1`/`package_n` je nový obecný `good` (text u balíčku jmenuje balíček).
+- Nové texty v Admin → Texty výsledků (verdikty, výzva).
+- E-maily klientovi: řádky s `{recommended_package*}` / `{inquiry_package}` se vynechají automaticky (i z textů uložených v DB). Admin e-maily, lead a SmartEmailing balíček dál mají.
+- Oprava: název doporučeného balíčku se do leadu nikdy neukládal (přepsalo ho pole `$calc['recommended_package']`), ukládala se jen cena.
+- Odebrán handler a popup „Poptat balíček“.
+**Proč:** Ukazování balíčku a ceny snižovalo konverzi. Cílem je schůzka, obchod se uzavírá až na ní.
+**Pozor na:** Na ostrém webu zkontrolovat Admin → Texty výsledků a Informační panel (uložené texty mohou zmiňovat balíčky). Po nasazení vyprázdnit cache WP Rocket, jinak se servíruje starý minifikovaný `frontend.js`.
+
 ### 2026-07-13 – Telefon jako povinné pole v hlavním formuláři (verze 1.6.0)
 
 **Soubory:** `emailing-calculator.php`, `CHANGELOG.md`, `includes/helpers.php`, `includes/class-ecalc-leads.php`, `includes/class-ecalc-rest.php`, `includes/class-ecalc-settings.php`, `includes/class-ecalc-admin.php`, `includes/class-ecalc-plugin.php`, `templates/frontend-form.php`, `templates/admin/page-form.php`, `assets/js/frontend.js`, `assets/css/frontend.css`, `docs/settings-reference.md`, `docs/overview.md`

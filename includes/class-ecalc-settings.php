@@ -244,8 +244,8 @@ class ECAlc_Settings {
 				'Orientační potenciál emailingu pro váš e-shop',
 				'Odhadovaný měsíční obrat z emailingu',
 				'Doporučený rozpočet podle vámi zvoleného PNO',
-				'Vhodný balíček služeb',
-				'Reálné PNO pro každý balíček',
+				'Jestli se vám emailing při zvoleném PNO vyplatí',
+				'Proč máte právě takový potenciál',
 			],
 			'note'  => 'Výsledky jsou orientační a závisí na zadaných údajích. Vždy doporučujeme detailní konzultaci.',
 		];
@@ -269,13 +269,13 @@ class ECAlc_Settings {
 			'admin_body'     => "Nový lead z emailing kalkulačky.\n\nJméno: {name}\nE-mail: {email}\nWeb: {shop_url}\nSegment: {segment}\nMěsíční obrat: {monthly_revenue}\nSpotřební zboží: {consumable_percentage}\nDatabáze: {database_range}\nOčekávané PNO: {expected_pno}\n\nPotenciál emailingu: {final_potential}\nOdhadovaný obrat z emailingu: {emailing_revenue_low} – {emailing_revenue_high}\nStřední scénář: {emailing_revenue_mid}\nDoporučený budget: {available_budget}\n\nDoporučený balíček: {recommended_package} ({recommended_package_price})\nReálné PNO balíčku: {recommended_package_real_pno}",
 			'client_enabled' => 0,
 			'client_subject' => 'Výsledek vaší emailing kalkulačky',
-			'client_body'    => "Dobrý den, {name},\n\nděkujeme za vyplnění kalkulačky. Zde jsou vaše výsledky:\n\nOdhadovaný potenciál emailingu: {final_potential}\nStřední scénář obratu z emailingu: {emailing_revenue_mid}\nDoporučený balíček: {recommended_package}\n\nChcete se dozvědět více? Kontaktujte nás.",
+			'client_body'    => "Dobrý den, {name},\n\nděkujeme za vyplnění kalkulačky. Zde jsou vaše výsledky:\n\nOdhadovaný potenciál emailingu: {final_potential}\nStřední scénář obratu z emailingu: {emailing_revenue_mid}\n\nChcete se dozvědět více? Kontaktujte nás.",
 
 			// Trigger 1: Follow-up – neklikl na žádné CTA
 			'trigger_followup_enabled'       => 0,
 			'trigger_followup_delay_hours'   => 24,
 			'trigger_followup_subject'       => 'Vaše výsledky z emailing kalkulačky stále čekají',
-			'trigger_followup_body'          => "Dobrý den, {name},\n\nspočítali jste si potenciál emailingu pro {shop_url} a výsledky jsou zajímavé.\n\nVaše výsledky:\n- Odhadovaný potenciál: {final_potential}\n- Odhadovaný obrat z emailingu: {emailing_revenue_mid}\n- Doporučený balíček: {recommended_package}\n\nJeště jste si nenaplánovali konzultaci. Rádi vám poradíme – stačí odpovědět na tento e-mail nebo se ozvat přes náš web.",
+			'trigger_followup_body'          => "Dobrý den, {name},\n\nspočítali jste si potenciál emailingu pro {shop_url} a výsledky jsou zajímavé.\n\nVaše výsledky:\n- Odhadovaný potenciál: {final_potential}\n- Odhadovaný obrat z emailingu: {emailing_revenue_mid}\n\nJeště jste si nenaplánovali konzultaci. Rádi vám poradíme – stačí odpovědět na tento e-mail nebo se ozvat přes náš web.",
 
 			// Trigger 2: Poptávka balíčku (Poptat balíček)
 			'trigger_inquiry_enabled'         => 1,
@@ -289,7 +289,7 @@ class ECAlc_Settings {
 			'trigger_consultation_admin_subject'  => 'Nová poptávka konzultace – {name} ({shop_url})',
 			'trigger_consultation_admin_body'     => "Zákazník poptává konzultaci emailingové strategie.\n\nJméno: {name}\nE-mail: {email}\nWeb: {shop_url}\nSegment: {segment}\nMěsíční obrat: {monthly_revenue}\n\nVýsledky kalkulačky:\n- Potenciál emailingu: {final_potential}\n- Odhadovaný obrat: {emailing_revenue_mid}\n- Doporučený balíček: {recommended_package} ({recommended_package_price})",
 			'trigger_consultation_client_subject' => 'Potvrzení poptávky konzultace – brzy se ozveme',
-			'trigger_consultation_client_body'    => "Dobrý den, {name},\n\nděkujeme za zájem o konzultaci emailingové strategie pro {shop_url}.\n\nOzveme se vám v nejbližší možné době.\n\nVaše výsledky z kalkulačky:\n- Odhadovaný potenciál emailingu: {final_potential}\n- Odhadovaný obrat z emailingu: {emailing_revenue_mid}\n- Doporučený balíček: {recommended_package}\n\nTěšíme se na spolupráci!",
+			'trigger_consultation_client_body'    => "Dobrý den, {name},\n\nděkujeme za zájem o konzultaci emailingové strategie pro {shop_url}.\n\nOzveme se vám v nejbližší možné době.\n\nVaše výsledky z kalkulačky:\n- Odhadovaný potenciál emailingu: {final_potential}\n- Odhadovaný obrat z emailingu: {emailing_revenue_mid}\n\nTěšíme se na spolupráci!",
 		];
 		$saved = get_option( 'ecalc_notifications', [] );
 		return wp_parse_args( $saved, $defaults );
@@ -450,8 +450,22 @@ class ECAlc_Settings {
 	private function default_result_texts(): array {
 		return [
 			'result_title' => 'Výsledek vaší kalkulačky',
-			'low_potential' => 'Podle zadaných údajů má váš e-shop v emailingu určitý potenciál, ale při vámi zvoleném PNO by pravděpodobně nebylo možné pokrýt minimální náklady na smysluplnou správu emailingu. Doporučujeme bezplatnou konzultaci, kde společně ověříme, zda existuje cesta, jak potenciál navýšit – například růstem databáze, lepší prací s opakovaným nákupem nebo úpravou očekávání.',
-			'borderline'    => 'Výsledek je hraniční. Emailing může dávat smysl, ale při aktuálním obratu, velikosti databáze a vámi zvoleném PNO je potřeba návratnost detailněji ověřit. Nejbližší variantou je základní balíček, ale reálné PNO může být vyšší než vámi zadané. Doporučujeme konzultaci zdarma.',
+			'low_potential' => 'Podle zadaných údajů má váš e-shop v emailingu určitý potenciál, ale při vámi zvoleném PNO by pravděpodobně nebylo možné pokrýt minimální náklady na smysluplnou správu emailingu. Na konzultaci zdarma společně ověříme, zda existuje cesta, jak potenciál navýšit, například růstem databáze, lepší prací s opakovaným nákupem nebo úpravou očekávání.',
+			'borderline'    => 'Výsledek je hraniční. Emailing může dávat smysl, ale při aktuálním obratu, velikosti databáze a vámi zvoleném PNO je potřeba návratnost detailněji ověřit. Na konzultaci zdarma projdeme vaše čísla a řekneme vám na rovinu, jestli se to vyplatí.',
+			'good'          => 'Podle zadaných údajů má váš e-shop dobrý potenciál pro výkonnostní emailing a při vámi zvoleném PNO se profesionální správa vyplatí. Na konzultaci zdarma projdeme vaše čísla a navrhneme, kde začít, aby emailing co nejdřív vydělával.',
+
+			// Verdikt (krátká karta „Vyplatí se?“)
+			'verdict_label'      => 'Vyplatí se emailing?',
+			'verdict_good'       => 'Ano, vyplatí se',
+			'verdict_good_sub'   => 'při vámi zvoleném PNO',
+			'verdict_borderline' => 'Hraničně',
+			'verdict_borderline_sub' => 'návratnost je potřeba ověřit',
+			'verdict_low'        => 'Při tomto PNO spíše ne',
+			'verdict_low_sub'    => 'potenciál je potřeba nejdřív navýšit',
+
+			// Výzva k rezervaci schůzky (jediná konverze výsledku)
+			'cta_title'    => 'Probereme váš výsledek na konzultaci zdarma',
+			'cta_subtitle' => 'Projdeme vaše čísla, ukážeme, kde emailing vydělá nejvíc, a řekneme vám na rovinu, jestli se vám vyplatí.',
 		];
 	}
 

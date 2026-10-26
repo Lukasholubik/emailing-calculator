@@ -1164,6 +1164,62 @@
 	border-color: var(--ecalc-btn2-border-hover, #4de5c4);
 }
 
+/* Verdikt „Vyplatí se?“ */
+.ecalc-verdict {
+	border-left-width: 4px;
+}
+
+.ecalc-verdict--good       { border-left-color: var(--ecalc-primary); }
+.ecalc-verdict--borderline { border-left-color: var(--ecalc-orange); }
+.ecalc-verdict--low        { border-left-color: var(--ecalc-red); }
+
+.ecalc-verdict--good .ecalc-verdict-value       { color: #0f766e; }
+.ecalc-verdict--borderline .ecalc-verdict-value { color: var(--ecalc-orange); }
+.ecalc-verdict--low .ecalc-verdict-value        { color: var(--ecalc-red); }
+
+/* Rezervace konzultace – jediná konverze výsledku */
+.ecalc-booking-cta {
+	background: var(--ecalc-dark, #352830);
+	color: var(--ecalc-dark-text, #ffffff);
+	border-radius: var(--ecalc-radius, 12px);
+	padding: 32px 36px;
+	margin-bottom: 28px;
+	text-align: center;
+}
+
+.ecalc-booking-cta-title {
+	font-family: 'Archivo Narrow', inherit;
+	font-size: var(--ecalc-h2-size, 1.45rem);
+	font-weight: 700;
+	font-style: oblique;
+	color: inherit;
+	margin: 0 0 10px;
+	line-height: 1.2;
+}
+
+.ecalc-booking-cta-sub {
+	font-size: 0.95rem;
+	line-height: 1.6;
+	opacity: 0.85;
+	max-width: 560px;
+	margin: 0 auto 22px;
+}
+
+.ecalc-booking-cta-note {
+	font-size: 0.82rem;
+	opacity: 0.7;
+	margin: 16px 0 0;
+}
+
+@media (max-width: 520px) {
+	.ecalc-booking-cta { padding: 24px 18px; }
+	.ecalc-booking-cta .ecalc-cta-btn {
+		display: block;
+		padding-left: 16px;
+		padding-right: 16px;
+	}
+}
+
 /* ===== INQUIRY THANK-YOU POPUP ===== */
 .ecalc-ty-overlay {
 	/* Sdílí .ecalc-bm-overlay styly */

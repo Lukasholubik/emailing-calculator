@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="ecalc-form-col">
 			<div class="ecalc-card ecalc-form-card">
 				<h2 class="ecalc-form-title">Zjistěte potenciál emailingu pro váš e-shop</h2>
-				<p class="ecalc-form-subtitle">Orientační kalkulačka vám ukáže, jaký výkon může emailing pro váš e-shop dosahovat a jaký balíček dává podle zadaných údajů smysl.</p>
+				<p class="ecalc-form-subtitle">Orientační kalkulačka vám ukáže, jaký výkon může emailing pro váš e-shop dosahovat a jestli se vám podle zadaných údajů vyplatí.</p>
 
 				<div class="ecalc-progress-wrap" aria-hidden="true">
 					<div class="ecalc-progress-bar"><div class="ecalc-progress-fill" id="ecalc-progress-fill"></div></div>
